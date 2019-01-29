@@ -37,8 +37,7 @@
     "sinon-chai": "2.14.0"
   },
   "dependencies": {
-    "czosnek": "^1.1.6",
-    "pikantny": "^1.2.8"
+    
   },
   "eslintConfig": {
     "env": {
@@ -48,12 +47,14 @@
     "globals": {
       "define": true,
       "module": true,
+      "Promise": true,
       "czosnek": true,
       "pikantny": true,
       "solone": true
     },
     "rules": {
-      "no-console": "off"
+      "no-console": "off",
+      "no-empty": "off"
     },
     "parserOptions": {
       "ecmaVersion": 2017
