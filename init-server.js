@@ -14,7 +14,8 @@ module.exports = (function(){
       __disabled = false,
       __configsFetched = false,
       __prefixWasSet = false,
-      __baseWasSet = false;
+      __baseWasSet = false,
+      __onAuthFail = function(){};
       
   /* ENDREGION */
   
@@ -52,7 +53,7 @@ module.exports = (function(){
   function authorize(title, query, headers)
   {
     return new Promise(function(resolve, reject){
-        __auth({component: title, query: query, Authorization: headers.Authorization}, resolve, reject);
+        __auth({component: title, query: query, headers: headers}, resolve, reject);
     });
   }
   
@@ -292,6 +293,7 @@ module.exports = (function(){
           fetchComponent(component, query, res, next);
         })
         .catch(function(){
+          __onAuthFail(component, query);
           next();
         })
       }
@@ -358,6 +360,13 @@ module.exports = (function(){
     return Solone;
   }
   
+  function setAuthFailListener(v)
+  {
+    if(!v) return __onAuthFail;
+    __onAuthFail = (typeof v === 'function' ? v : __onAuthFail);
+    return Solone;
+  }
+  
   /* ENDREGION */
   
   function Solone(req, res, next)
@@ -387,7 +396,8 @@ module.exports = (function(){
     base: setDescriptor(base),
     isDisabled: setDescriptor(disabled),
     config: setDescriptor(config),
-    auth: setDescriptor(auth)
+    auth: setDescriptor(auth),
+    setAuthFailListener: setDescriptor(setAuthFailListener)
   })
   
   return Solone;

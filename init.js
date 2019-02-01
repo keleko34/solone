@@ -13,6 +13,8 @@ else
     document.head.appendChild(s);
   }
   
+  if(!__KaleoExtensions__) window.__KaleoExtensions__ = {config:{}};
+  
   /* Attach script to head */
   s = document.createElement('script');
   s.type = 'text/javascript';

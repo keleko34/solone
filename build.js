@@ -2,7 +2,7 @@ var base = process.cwd().replace(/\\/g,'/'),
     fs = require('fs'),
     closureCompiler = require('google-closure-compiler-js').compile;
 
-console.log("Building Library...");
+console.log("Building Libraries...");
 
 function flags(src)
 {
@@ -16,4 +16,4 @@ fs.writeFileSync(base+'/init.min.js',closureCompiler(flags('/init.js')).compiled
 fs.writeFileSync(base+'/init-client.min.js',closureCompiler(flags('/init-client.js')).compiledCode);
 fs.writeFileSync(base+'/init-server.min.js',closureCompiler(flags('/init-server.js')).compiledCode);
 
-console.log("Finished Building Minified Library..");
+console.log("Finished Building Minified Libraries..");

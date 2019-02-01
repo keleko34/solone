@@ -61,12 +61,17 @@ window.solone = (function(){
   {
     return Promise.all([
       fetchFile('/node_modules/kaleo/config.js'),
-      fetchFile(__base + __prefix + '/config.js')
+      fetchFile(__base + __prefix + '/config.js'),
+      fetchFile(__base + __prefix + '/auth-client.js')
     ])
-    .then(function(nodeConfig, localConfig){
-      var script = createScript('config_setup', '');
+    .then(function(nodeConfig, localConfig, auth){
+      var script = createScript('config_setup', ''),
+          script_auth = createScript('auth', auth);
+      
       script.textContent = nodeConfig.replace('module.exports', '\r\nvar node_config')
       + localConfig.replace('module.exports', '\r\nvar local_config');
+      
+      
       
       Object.keys(node_config)
       .forEach(function(k){
@@ -94,16 +99,18 @@ window.solone = (function(){
         }
       });
       
+      Solone.authorization = __KaleoExtensions__.authorization;
+      
       /* Cleanup */
       node_config = null;
       local_config = null;
       document.head.removeChild(script);
+      document.head.removeChild(script_auth);
       
       if(__config.prefix) __prefix = __config.prefix;
       if(__config.base) __base = __config.base;
       if(__config.environments) __environments = __environments.concat(__config.environments);
       if(__config.uriDecoder) __uriDecoder = __config.uriDecoder;
-      if(__config.auth) Solone.authorization = __config.auth;
       if(__config.backendRouting) Solone.useBackend = __config.backendRouting;
       
       __configsFetched = true;
@@ -113,12 +120,12 @@ window.solone = (function(){
     });
   }
   
-  function fetchDevFiles(title)
+  function fetchDevFiles(title, headers)
   {
     return Promise.all([
-      fetchFile(__base + __prefix + '/components/' + title + '/' + title + '.js'),
-      fetchFile(__base + __prefix + '/components/' + title + '/' + title + '.html'),
-      fetchFile(__base + __prefix + '/components/' + title + '/' + title + '.css')
+      fetchFile(__base + __prefix + '/components/' + title + '/' + title + '.js', headers),
+      fetchFile(__base + __prefix + '/components/' + title + '/' + title + '.html', headers),
+      fetchFile(__base + __prefix + '/components/' + title + '/' + title + '.css', headers)
     ])
     .then(function(js, html, css){
        var script = createScript(title, ''
@@ -136,9 +143,9 @@ window.solone = (function(){
     });
   }
   
-  function fetchComponent(title, env, debug)
+  function fetchComponent(title, env, debug, headers)
   {
-    return fetchFile(__base + __prefix + '/components/' + title + '/' + env + '/' + title + (!debug ? '.min' : '') + '.js')
+    return fetchFile(__base + __prefix + '/components/' + title + '/' + env + '/' + title + (!debug ? '.min' : '') + '.js', headers)
     .then(function(v){
       
       var script = createScript(title, ''
@@ -157,16 +164,18 @@ window.solone = (function(){
   
   function getComponent(title, query, env, debug)
   {
+    var __headers = {};
+    
     return new Promise(function(resolve, reject){
       if(__environments.indexOf(env) === -1) return reject();
       if(!Solone.authorization) return resolve();
-      Solone.authorization(title, query, resolve, reject);
+      Solone.authorization({component: title, query: query, headers: __headers}, resolve, reject);
     })
     .then(function(){
       if(__KaleoExtensions__.components[title]) return __KaleoExtensions__.components[title];
       if(Solone.useBackend)
       {
-        return fetchFile(__base + __prefix + '/' + title + location.search)
+        return fetchFile(__base + __prefix + '/' + title + location.search, __headers)
         .then(function(v){
           var script = createScript(title, v);
           
@@ -176,9 +185,10 @@ window.solone = (function(){
           return __KaleoExtensions__.components[title];
         });
       }
-      return ((env === 'dev' || !env) ? fetchDevFiles(title) : fetchComponent(title, env, debug));
+      return ((env === 'dev' || !env) ? fetchDevFiles(title, __headers) : fetchComponent(title, env, debug, __headers));
     })
     .catch(function(v){
+      if(Solone.authorization) return Solone.onAuthFail(title, query);
       console.error('ERR! component fetch failed', title, env, debug, v.stack);
     })
   }
@@ -233,6 +243,13 @@ window.solone = (function(){
     return Solone;
   }
   
+  function setAuthFailListener(v)
+  {
+    if(!v) return __onAuthorizationFailed;
+    __onAuthorizationFailed = (typeof v === 'function' ? v : __onAuthorizationFailed);
+    return Solone;
+  }
+  
   function prefix(v)
   {
     if(!v) return __prefix;
@@ -282,6 +299,8 @@ window.solone = (function(){
     backendRouting: setDescriptor(backendRouting),
     authorization: setDescriptor(undefined, true, true),
     auth: setDescriptor(auth),
+    onAuthFail: setDescriptor(function(){}, true, true),
+    setAuthFailListener: setDescriptor(setAuthFailListener),
     headers: setDescriptor(headers),
     prefix: setDescriptor(prefix),
     base: setDescriptor(base),
