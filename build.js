@@ -8,7 +8,8 @@ function flags(src)
 {
   return {
     jsCode: [{src: fs.readFileSync(base+src,'utf8')}],
-    compilationLevel: 'SIMPLE'
+    compilationLevel: 'SIMPLE',
+    rewritePolyfills: false
   }
 }
 
