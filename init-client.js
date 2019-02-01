@@ -1,80 +1,192 @@
 window.solone = (function(){
-  
   var __prefix = '',
       __base = '',
-      __config = {};
-  
-  var __CSSLOCALS = /((\.{{>?local}}.*?{(([\r\n\s\W\w]+?)|(.*?))}(?=[\n\.\r\s]|$)))/g;
+      __environments = ['dev', 'prod'],
+      __uriDecoder,
+      __headers,
+      __config = __KaleoExtensions__.config,
+      __configsFetched = false;
   
   /* HELPER METHODS */
   /* REGION */
   
-  function createScript(name, script)
+  function createScript(title, script)
   {
     var sc = document.createElement('script');
+    sc.title = title;
     sc.type = 'text/javascript';
-    sc.innerText = script;
+    sc.textContent = script;
+    document.head.appendChild(sc);
     return sc;
   }
   
-  /* TODO: change to split base css locals as well */
-  function createStyleSheet(title)
+  function fetchFile(url, headers)
   {
-    var alreadyExists = document.querySelector('style[name=' + title + ']'),
-        st = (document.createElement('style'));
-        
-        st.type = 'text/css';
-        st.name = title;
-        st.innerText = (alreadyExists ? s.match(__CSSLOCALS).join('\r\n') : s);
+    return new Promise(function(resolve, reject){
+      
+      headers = (headers || __headers);
     
-    document.head[alreadyExists && alreadyExists.nextSibling ? 'insertBefore' : 'appendChild'](st, alreadyExists.nextSibling);
-  }
-  
-  function fetchFile(url, headers, success, fail)
-  {
-    var __xhr = new XMLHttpRequest()
-    
-    __xhr.open('GET', url, true);
-    
-    if(headers)
-    {
-      Object.keys(headers)
-      .forEach(function(v){
-        __xhr.setRequestHeader(v, headers[v]);
-      })
-    }
-    
-    __xhr.onreadystatechange = function()
-    {
-      if(__xhr.readyState === 4)
+      var __xhr = new XMLHttpRequest()
+
+      __xhr.open('GET', url, true);
+
+      if(headers)
       {
-        if(__xhr.status === 200)
+        Object.keys(headers)
+        .forEach(function(v){
+          __xhr.setRequestHeader(v, headers[v]);
+        })
+      }
+      
+      __xhr.onreadystatechange = function()
+      {
+        if(__xhr.readyState === 4)
         {
-          success(__xhr.responseText);
-        }
-        else
-        {
-          fail(__xhr.status);
+          if(__xhr.status === 200)
+          {
+            resolve(__xhr.responseText);
+          }
+          else
+          {
+            reject(new Error(__xhr.status));
+          }
         }
       }
-    }
-    __xhr.send();
+      
+      __xhr.send();
+    });
   }
   
   function fetchConfigs()
   {
-    fetchFile(__base + __prefix + '/node_modules/kaleo/config.js', undefined, function(v){
-      var nodeConfigText = v.replace('module.exports', 'var nodeConfig');
+    return Promise.all([
+      fetchFile('/node_modules/kaleo/config.js'),
+      fetchFile(__base + __prefix + '/config.js')
+    ])
+    .then(function(nodeConfig, localConfig){
+      var script = createScript('config_setup', '');
+      script.textContent = nodeConfig.replace('module.exports', '\r\nvar node_config')
+      + localConfig.replace('module.exports', '\r\nvar local_config');
       
-    }, function(v){
-      console.error('Failed to ')
+      Object.keys(node_config)
+      .forEach(function(k){
+        __config[k] = node_config[k];
+      })
+      
+      Object.keys(local_config)
+      .forEach(function(k){
+        if(__config[k] && typeof __config[k] === 'object')
+        {
+          if(__config[k].length)
+          {
+            __config[k].concat(local_config[k]);
+          }
+          else
+          {
+            Object.keys(local_config[k]).forEach(function(key){
+              __config[k][key] = local_config[k][key];
+            })
+          }
+        }
+        else
+        {
+          __config[k] = local_config[k];
+        }
+      });
+      
+      /* Cleanup */
+      node_config = null;
+      local_config = null;
+      document.head.removeChild(script);
+      
+      if(__config.prefix) __prefix = __config.prefix;
+      if(__config.base) __base = __config.base;
+      if(__config.environments) __environments = __environments.concat(__config.environments);
+      if(__config.uriDecoder) __uriDecoder = __config.uriDecoder;
+      if(__config.auth) Solone.authorization = __config.auth;
+      if(__config.backendRouting) Solone.useBackend = __config.backendRouting;
+      
+      __configsFetched = true;
+    })
+    .catch(function(){
+      console.error('Failed to fetch configs', arguments);
+    });
+  }
+  
+  function fetchDevFiles(title)
+  {
+    return Promise.all([
+      fetchFile(__base + __prefix + '/components/' + title + '/' + title + '.js'),
+      fetchFile(__base + __prefix + '/components/' + title + '/' + title + '.html'),
+      fetchFile(__base + __prefix + '/components/' + title + '/' + title + '.css')
+    ])
+    .then(function(js, html, css){
+       var script = createScript(title, ''
+        + '__KaleoExtensions__.components["'+title+'"] = (function(){\r\n' + js
+        + '\r\n'+title+'.prototype.__extensionsHTML__ = "'+html.replace(/[\r\n]/g,'').replace(/[\"]/g,"'")+'";'
+        + '\r\n'+title+'.prototype.__extensionsCSS__ = "'+css.replace(/[\r\n]/g,'').replace(/[\"]/g,"'")+'";'
+        + '\r\nreturn '+title+';\r\n}());');
+      
+      script.setAttribute('env', 'dev');
+      
+      return __KaleoExtensions__.components[title];
+    })
+    .catch(function(){
+      console.error("ERR! failed to fetch", title, arguments);
+    });
+  }
+  
+  function fetchComponent(title, env, debug)
+  {
+    return fetchFile(__base + __prefix + '/components/' + title + '/' + env + '/' + title + (!debug ? '.min' : '') + '.js')
+    .then(function(v){
+      
+      var script = createScript(title, ''
+        + '__KaleoExtensions__.components["'+title+'"] = (function(){\r\n' + v
+        + '\r\nreturn '+title+';\r\n}());');
+      
+      script.setAttribute('env', env);
+      if(debug) script.setAttribute('debug', debug);
+      
+      return __KaleoExtensions__.components[title];
+    })
+    .catch(function(v){
+      console.error("ERR! failed to fetch", title, v);
+    })
+  }
+  
+  function getComponent(title, query, env, debug)
+  {
+    return new Promise(function(resolve, reject){
+      if(__environments.indexOf(env) === -1) return reject();
+      if(!Solone.authorization) return resolve();
+      Solone.authorization(title, query, resolve, reject);
+    })
+    .then(function(){
+      if(__KaleoExtensions__.components[title]) return __KaleoExtensions__.components[title];
+      if(Solone.useBackend)
+      {
+        return fetchFile(__base + __prefix + '/' + title + location.search)
+        .then(function(v){
+          var script = createScript(title, v);
+          
+          script.setAttribute('env', env);
+          if(debug) script.setAttribute('debug', debug);
+          
+          return __KaleoExtensions__.components[title];
+        });
+      }
+      return ((env === 'dev' || !env) ? fetchDevFiles(title) : fetchComponent(title, env, debug));
+    })
+    .catch(function(v){
+      console.error('ERR! component fetch failed', title, env, debug, v.stack);
     })
   }
   
   function parseQuery(params)
   {
-    if(!params) return {env: 'dev'};
-    return params.split(/[\&]/g)
+    if(!params) return {env: (__config.env || 'dev')};
+    return (__uriDecoder ? __uriDecoder(params) : decodeURIComponent(params)).split(/[\&]/g)
     .reduce(function(obj, v){
       var split = v.split('=');
       if(split.length === 1)
@@ -87,16 +199,6 @@ window.solone = (function(){
       }
       return obj;
     }, {})
-  }
-  
-  function error()
-  {
-    
-  }
-  
-  function getComponent()
-  {
-    
   }
   
   /* ENDREGION */
@@ -145,20 +247,34 @@ window.solone = (function(){
     return Solone;
   }
   
+  function headers(v)
+  {
+    if(!v) return __headers;
+    __headers = (typeof v === 'object' ? v : __headers);
+    return Solone;
+  }
+  
+  function config()
+  {
+    return __config;
+  }
+  
   /* ENDREGION */
   
   /* add ability for auth function, check if useBackend for url */
   function Solone(title)
   {
     var query = parseQuery(location.search.replace('?','')),
-        env = query.env,
-        debug = query.debug,
-        next = getComponent.bind({title: title, env:env, debug:debug}),
-        fail = error.bind({title: title, env:env, debug:debug});
+        env = (query.env || __config.env),
+        debug = (query.debug || __config.debug);
     
-    if(!Solone.authorization) return next();
+    if(!__configsFetched) 
+    {
+      return fetchConfigs()
+      .then(function(){ return getComponent(title, query, env, debug);})
+    }
     
-    Solone.authorization(title, query, next, fail);
+    return getComponent(title, query, env, debug);
   }
   
   Object.defineProperties(Solone,{
@@ -166,8 +282,10 @@ window.solone = (function(){
     backendRouting: setDescriptor(backendRouting),
     authorization: setDescriptor(undefined, true, true),
     auth: setDescriptor(auth),
+    headers: setDescriptor(headers),
     prefix: setDescriptor(prefix),
-    base: setDescriptor(base)
+    base: setDescriptor(base),
+    config: setDescriptor(config)
   })
   
   /* AMD AND COMMONJS COMPATABILITY */

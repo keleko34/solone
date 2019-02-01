@@ -1,38 +1,21 @@
-/* TODO: route components, group into single component if multiple files, route environment, load config  */
+var fs = require('fs'),
+    preappend = require('./stream-appender/stream-appender.js').preappend;
 
 module.exports = (function(){
-  
-  /* GLOBALS */
-  /* REGION */
-  
-  var fs = require('fs'),
-      path = require('path'),
-      querystring = require('querystring'),
-      streamAppender = require('./stream-appender/stream-appender.js'),
-      preappend = streamAppender.preappend;
-  
-  /* ENDREGION */
   
   /* PROPERTIES */
   /* REGION */
   var __prefix = '',
       __base = process.cwd().replace(/\\/g,'/'),
-      __config = {},
-      __environments = [],
+      __environments = ['dev', 'prod'],
       __uriDecoder,
-      __auth;
+      __config = {},
+      __auth,
+      __disabled = false,
+      __configsFetched = false,
+      __prefixWasSet = false,
+      __baseWasSet = false;
       
-  
-  /* ENDREGION */
-  
-  /* LOCAL VARIABLES */
-  /* REGION */
-  
-  var __prefixWasSet = false,
-      __baseWasSet = false,
-      __currentUrl = __base + __prefix,
-      __configFilled = false;
-  
   /* ENDREGION */
   
   /* PROMISE METHODS */
@@ -51,11 +34,187 @@ module.exports = (function(){
   function getFile(path)
   {
     return new Promise(function(resolve, reject) {
-      fs.readFile(path, function(err, data) {
+      fs.readFile(path, { encoding: 'utf8'}, function(err, data) {
         if(err) return reject(err);
         resolve(data);
       });
     });
+  }
+  
+  function getDevComponents(title)
+  {
+    return Promise.all([
+      getFile(__base + __prefix + '/components/' + title + '/' + title + '.html'),
+      getFile(__base + __prefix + '/components/' + title + '/' + title + '.css')
+    ]);
+  }
+  
+  function authorize(title, query, headers)
+  {
+    return new Promise(function(resolve, reject){
+        __auth({component: title, query: query, Authorization: headers.Authorization}, resolve, reject);
+    });
+  }
+  
+  function getStream(title, env, debug)
+  {
+    return fs.createReadStream(__base + __prefix + '/components/' + title + '/' + (env === 'dev' ? (title + '.js') : (env + '/' + title + (!debug ? '.min' : '') + '.js')));
+  }
+  
+  /* ENDREGION */
+  
+  /* FETCH CONFIGS */
+  /* REGION */
+  
+  function getConfigs()
+  {
+    return new Promise(function(resolve, reject){
+      
+      var baseConfig,
+          localConfig;
+      
+      try{
+        baseConfig = require(process.cwd().replace(/\\/g,'/') + '/node_modules/kaleo/config.js');
+        localConfig = require(__base + __prefix + '/config.js');
+    
+        __auth = require(__base + __prefix + '/auth-server.js');
+      }
+      catch(e)
+      {
+        return reject(e);
+      }
+      
+      Object.keys(baseConfig).forEach(function(v){
+        __config[v] = baseConfig[v];
+      });
+    
+      Object.keys(localConfig).forEach(function(v){
+        if(__config[v] && typeof __config[v] === 'object')
+        {
+          if(__config[v].length)
+          {
+            __config[v].concat(localConfig[v]);
+          }
+          else
+          {
+            Object.keys(localConfig[v]).forEach(function(key){
+              __config[v][key] = localConfig[v][key];
+            })
+          }
+        }
+        else
+        {
+          __config[v] = localConfig[v];
+        }
+      });
+
+      if(!__prefixWasSet && __config.prefix) __prefix = __config.prefix;
+      if(!__baseWasSet && __config.base) __base = __config.base;
+      if(__config.environments) __environments = __environments.concat(__config.environments);
+      if(__config.uriDecoder) __uriDecoder = __config.uriDecoder;
+
+      __configsFetched = true;
+      
+      resolve(__configsFetched);
+    })
+  }
+  
+  /* ENDREGION */
+  
+  /* URL HANDLING */
+  /* REGION */
+  
+  function search(url)
+  {
+    var __queryIndex = url.indexOf('?'),
+        __hashIndex = url.indexOf('#');
+    
+    if(__queryIndex !== -1)
+    {
+      if(__hashIndex > __queryIndex)
+      {
+        return url.substring(__queryIndex,__hashIndex); 
+      }
+      else
+      {
+        return url.substring(__queryIndex,url.length);
+      }
+    }
+    return '';
+  }
+  
+  function hash(url)
+  {
+    var __hashIndex = url.indexOf('#');
+    
+    if(__hashIndex !== -1)
+    {
+      return url.substring(__hashIndex,url.length);
+    }
+    return '';
+  }
+  
+  function ext(url)
+  {
+    var __extIndex = url.lastIndexOf('.');
+    
+    if(__extIndex !== -1)
+    {
+      return url.substring(__extIndex, url.length);
+    }
+    return '';
+  }
+  
+  function last(url)
+  {
+    var __extIndex = url.lastIndexOf('.'),
+        __split = url.split('/');
+    return __split[(__split.length - (__extIndex !== -1 ? 2 : 1))];
+  }
+  
+  function pathname(url)
+  {
+    var __extIndex = url.lastIndexOf('.'),
+        __split = url.split('/');
+    
+    if(__extIndex !== -1) __split = __split.slice(0, (__split.length - 1));
+    
+    return __split.join('/');
+  }
+  
+  function query(q, search)
+  {
+    if(!search) return q;
+    
+    var __query = q,
+        __pairs = search.split('&'),
+        __pair;
+    
+    __pairs.forEach(function(v){
+      __pair = v.split('=');
+      __query[__pair[0]] = __pair[1];
+    });
+    
+    return __query;
+  }
+  
+  function parseUrl(req)
+  {
+    var __url = {},
+        __query = (req.query || {}),
+        __decoder = (__uriDecoder ? __uriDecoder : decodeURIComponent);
+    
+    __url.href = __decoder(req.url);
+    __url.search = search(__url.href);
+    __url.hash = hash(__url.href.replace(__url.search,''));
+    __url.path = __url.href.replace(__url.search,'').replace(__url.hash,'');
+    __url.ext = ext(__url.path);
+    __url.last = last(__url.path);
+    __url.pathname = pathname(__url.path);
+    __url.query = query(__query, __url.search);
+    __url.base = __url.path.replace(__prefix, '').replace(__base, '');
+    
+    return __url;
   }
   
   /* ENDREGION */
@@ -63,99 +222,24 @@ module.exports = (function(){
   /* HELPER METHODS */
   /* REGION */
   
-  function getConfig(isFirst)
-  {
-    __config = {};
-    
-    try{
-      var baseConfig = require(__base + '/node_modules/kaleo/config.js'),
-          localConfig = require(__base + '/config.js');
-      
-          Object.keys(baseConfig).forEach(function(v){
-            __config[v] = baseConfig[v];
-          })
-
-          Object.keys(localConfig).forEach(function(v){
-            if(__config[v] && typeof __config[v] === 'object')
-            {
-              if(__config[v].length)
-              {
-                __config[v].concat(localConfig[v]);
-              }
-              else
-              {
-                Object.keys(localConfig[v]).forEach(function(key){
-                  __config[v][key] = localConfig[v][key];
-                })
-              }
-            }
-            else
-            {
-              __config[v] = localConfig[v];
-            }
-          })
-    
-      if(!__prefixWasSet && __config.prefix) __prefix = __config.prefix;
-      if(!__baseWasSet && __config.base) __base = __config.base;
-      if(__config.environments) __environments = __config.environments;
-      if(__config.uriDecoder) __uriDecoder = __config.uriDecoder;
-      if(__config.auth) __auth = __config.auth
-      
-      __currentUrl = __base + __prefix;
-      __configFilled = true;
-    }
-    catch(e){
-      if(!isFirst) console.error('ERR! No config was found in ',__base + __prefix);
-    }
-  }
-  
-  function getFileSrc(title, query)
-  {
-    var __env = (query.env || __config.env || 'dev'),
-        __debug = (query.debug || __config.debug || false);
-    
-    if(__env === 'dev')
-    {
-      return {
-        js: title + '.js',
-        html: title + '.html',
-        css: title + '.css'
-      };
-    }
-    else
-    {
-      return {
-        js: ('/' + __env + '/' + title + (__debug ? '.min.js' : '.js'))
-      };
-    }
-  }
-  
   function fetchComponent(title, query, res, next)
   {
-    var files = getFileSrc(title, query),
-        fileSrc = {html:'',css:''};
-    
     exists(title)
-    .then(function(v){
+    .then(function(){
       if(query.env === 'dev')
       {
-        getFile(v + '/' + files.html)
-        .then(function(v){
-          fileSrc.html = v;
-          return getFile(v + '/' + files.css);
+        getDevComponents(title)
+        .then(function(files){
+          allFilesRecieved(title, getStream(title, query.env, query.debug), {html: files[0], css: files[1]}).pipe(res); 
         })
-        .then(function(v){
-          fileSrc.css = v;
-          res.pipe(allFilesRecieved(title, fs.createReadStream(v + '/' + files.js), fileSrc)); 
-        })
-        .catch(function(v){
-          console.error("ERR! Component", title, "is missing",v,"required to operate")
+        .catch(function(e){
+          console.error("ERR! Component", title, "is missing",e,"required to operate")
           res.end('Component missing files');
         })
       }
       else
       {
-        res.pipe(allFilesRecieved(title, fs.createReadStream(v + '/' + files.js))); 
+        allFilesRecieved(title, getStream(title, query.env, query.debug)).pipe(res);
       }
     })
     .catch(function(){
@@ -168,7 +252,7 @@ module.exports = (function(){
     if(files)
     {
       return stream.pipe(preappend(
-          '__KaleoExtensions__.components['+title+'] = (function(){\r\n',
+          '__KaleoExtensions__.components["'+title+'"] = (function(){\r\n',
           '\r\n'+title+'.prototype.__extensionsHTML__ = "'+files.html.replace(/[\r\n]/g,'').replace(/[\"]/g,"'")+'";'
         + '\r\n'+title+'.prototype.__extensionsCSS__ = "'+files.css.replace(/[\r\n]/g,'').replace(/[\"]/g,"'")+'";'
         + '\r\nreturn '+title+';\r\n}());'
@@ -180,6 +264,45 @@ module.exports = (function(){
           '__KaleoExtensions__.components['+title+'] = (function(){\r\n',
           '\r\nreturn '+title+';\r\n}());'
       ));
+    }
+  }
+  
+  /* TODO: change to using path methods */
+  function getComponent(req, res, next)
+  {
+    var url = parseUrl(req)
+    
+    if(url.base === '/' || url.base.split(/[\/\.]/g).filter(Boolean).length > 1) return next();
+    
+    /* TAKE REQ AND SEND BACK COMPONENT FILE BASED ON URL AND QUERY */
+    /* url.last = COMPONENT */
+    /* QUERY = (debug, env) */
+    var query = url.query,
+        component = url.last,
+        env = (query.env || __config.env || 'dev');
+    
+    query.env = env;
+    
+    if(__environments.indexOf(env) !== -1)
+    {
+      if(typeof __auth === 'function')
+      {
+        authorize(component, query, req.headers)
+        .then(function(){
+          fetchComponent(component, query, res, next);
+        })
+        .catch(function(){
+          next();
+        })
+      }
+      else
+      {
+        fetchComponent(component, query, res, next);
+      }
+    }
+    else
+    {
+      return next();
     }
   }
   
@@ -217,88 +340,54 @@ module.exports = (function(){
     return Solone;
   }
   
+  function disabled(v)
+  {
+    __disabled = !!v;
+    return Solone;
+  }
+  
   function config()
   {
     return __config;
+  }
+  
+  function auth(v)
+  {
+    if(!v) return __auth;
+    __auth = (typeof v === 'function' ? v : __auth);
+    return Solone;
   }
   
   /* ENDREGION */
   
   function Solone(req, res, next)
   {
-    /* CHECK IF URL CHANGED */
-    if(__currentUrl !== __base + __prefix)
-    {
-      __currentUrl = __base + __prefix;
-      __configFilled = false;
-    }
-    
     /* FETCH CONFIGS IF NOT ALREADY FETCHED */
-    if(!__configFilled) getConfig();
-    
-    /* ERR IF EITHER FAILED */
-    if(!__configFilled)
+    if(!__configsFetched)
     {
-      console.error("ERR!", "Config.js is missing from", __base + __prefix)
-      return next();
-    }
-    
-    
-    /* TAKE REQ AND SEND BACK COMPONENT FILE BASED ON URL AND QUERY */
-    /* URL = COMPONENT NAME */
-    /* QUERY = (debug, env) */
-    var query = req.query,
-        localQueryIndex = req.url.indexOf('?'),
-        localQueryString = '',
-        localQuery,
-        component = path.posix.basename(req.url);
-    
-    /* PARSE QUERY PARAMS FROM URL */
-    if(localQueryIndex !== -1)
-    {
-      var decoder = (__uriDecoder ? { decodeURIComponent: __uriDecoder } : {});
-      
-      localQueryString = req.url.substring(localQuery, req.url.length);
-      localQuery = querystring.parse(localQueryString, null, null,decoder);
-      
-      Object.keys(localQuery).forEach(function(v){
-        query[v] = localQuery[v];
+      getConfigs()
+      .then(function(){
+        if(__disabled) return next();
+        getComponent(req, res, next);
       })
-    }
-    
-    if(!query.env) query.env = 'dev';
-    
-    if(__environments.indexOf(query.env) !== -1)
-    {
-      /* CHECK AND RUN AUTH IF IT IS USED */
-      if(typeof __auth === 'function')
-      {
-        if(__auth(component, query, req.headers.Authorization))
-        {
-          /* SEND BACK COMPONENT */
-          fetchComponent(component, query, res, next);
-        }
-        else
-        {
-          return next();
-        }
-      }
-      else
-      {
-        /* SEND BACK COMPONENT */
-        fetchComponent(component, query, res, next);
-      }
+      .catch(function(e){
+        console.error("ERR!", "Config.js is missing from", __base + __prefix, e)
+        return next();
+      })
     }
     else
     {
-      return next();
+      if(__disabled) return next();
+      getComponent(req, res, next);
     }
   }
   
   Object.defineProperties(Solone, {
     prefix: setDescriptor(prefix),
     base: setDescriptor(base),
-    config: setDescriptor(config)
+    isDisabled: setDescriptor(disabled),
+    config: setDescriptor(config),
+    auth: setDescriptor(auth)
   })
   
   return Solone;

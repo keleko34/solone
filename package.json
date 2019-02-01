@@ -37,7 +37,7 @@
     "sinon-chai": "2.14.0"
   },
   "dependencies": {
-    
+    "peprze": "^1.1.6"
   },
   "eslintConfig": {
     "env": {
@@ -48,9 +48,10 @@
       "define": true,
       "module": true,
       "Promise": true,
-      "czosnek": true,
-      "pikantny": true,
-      "solone": true
+      "solone": true,
+      "__KaleoExtensions__": true,
+      "node_config": true,
+      "local_config": true
     },
     "rules": {
       "no-console": "off",

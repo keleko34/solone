@@ -60,5 +60,5 @@ typings/
 # next.js build output
 .next
 
-# components folder
-components
+# include testing modules folder
+!/node_modules/kaleo/
