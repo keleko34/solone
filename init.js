@@ -4,20 +4,27 @@ if(typeof module !== 'undefined' && typeof process !== 'undefined')
 }
 else
 {
+  var localurl = (function(){
+    document.querySelectorAll('script')
+    .forEach(function(v){
+      if(v.src.indexOf('solone') != -1) return v.src.replace('/solone/init.js');
+    })
+  }())
+  
+  if(typeof __KaleoExtensions__ === 'undefined') window.__KaleoExtensions__ = {config:{}};
+  
   /* attach peprze if not already */
-  if(!document.querySelector('script[src="/node_modules/peprze/init.js"]'))
+  if(!document.querySelector('script[src="' + localurl + '/peprze/init.js"]'))
   {
     var s = document.createElement('script');
     s.type = 'text/javascript';
-    s.src = '/node_modules/peprze/init.js';
+    s.src = '' + localurl + '/peprze/init.js';
     document.head.appendChild(s);
   }
-  
-  if(typeof __KaleoExtensions__ === 'undefined') window.__KaleoExtensions__ = {config:{}};
   
   /* Attach script to head */
   s = document.createElement('script');
   s.type = 'text/javascript';
-  s.src = '/node_modules/solone/init-client.js';
+  s.src = localurl + '/solone/init-client.js';
   document.head.appendChild(s);
 }

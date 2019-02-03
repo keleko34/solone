@@ -71,12 +71,9 @@ module.exports = (function(){
   {
     return new Promise(function(resolve, reject){
       
-      var baseConfig,
-          localConfig;
-      
       try{
-        baseConfig = require(process.cwd().replace(/\\/g,'/') + '/node_modules/kaleo/config.js');
-        localConfig = require(__base + __prefix + '/config.js');
+        var baseConfig = require(process.cwd().replace(/\\/g,'/') + '/node_modules/kaleo/config.js'),
+            localConfig = require(__base + __prefix + '/config.js');
     
         __auth = require(__base + __prefix + '/auth-server.js');
       }

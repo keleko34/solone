@@ -4,8 +4,10 @@ window.solone = (function(){
       __environments = ['dev', 'prod'],
       __uriDecoder,
       __headers,
-      __config = __KaleoExtensions__.config,
-      __configsFetched = false;
+      __config = __KaleoExtensions__.config || {},
+      __onAuthorizationFailed = function(){},
+      __env = (__config.env || 'dev'),
+      __debug = (__config.debug || false);
   
   /* HELPER METHODS */
   /* REGION */
@@ -54,69 +56,6 @@ window.solone = (function(){
       }
       
       __xhr.send();
-    });
-  }
-  
-  function fetchConfigs()
-  {
-    return Promise.all([
-      fetchFile('/node_modules/kaleo/config.js'),
-      fetchFile(__base + __prefix + '/config.js'),
-      fetchFile(__base + __prefix + '/auth-client.js')
-    ])
-    .then(function(nodeConfig, localConfig, auth){
-      var script = createScript('config_setup', ''),
-          script_auth = createScript('auth', auth);
-      
-      script.textContent = nodeConfig.replace('module.exports', '\r\nvar node_config')
-      + localConfig.replace('module.exports', '\r\nvar local_config');
-      
-      
-      
-      Object.keys(node_config)
-      .forEach(function(k){
-        __config[k] = node_config[k];
-      })
-      
-      Object.keys(local_config)
-      .forEach(function(k){
-        if(__config[k] && typeof __config[k] === 'object')
-        {
-          if(__config[k].length)
-          {
-            __config[k].concat(local_config[k]);
-          }
-          else
-          {
-            Object.keys(local_config[k]).forEach(function(key){
-              __config[k][key] = local_config[k][key];
-            })
-          }
-        }
-        else
-        {
-          __config[k] = local_config[k];
-        }
-      });
-      
-      Solone.authorization = __KaleoExtensions__.authorization;
-      
-      /* Cleanup */
-      node_config = null;
-      local_config = null;
-      document.head.removeChild(script);
-      document.head.removeChild(script_auth);
-      
-      if(__config.prefix) __prefix = __config.prefix;
-      if(__config.base) __base = __config.base;
-      if(__config.environments) __environments = __environments.concat(__config.environments);
-      if(__config.uriDecoder) __uriDecoder = __config.uriDecoder;
-      if(__config.backendRouting) Solone.useBackend = __config.backendRouting;
-      
-      __configsFetched = true;
-    })
-    .catch(function(){
-      console.error('Failed to fetch configs', arguments);
     });
   }
   
@@ -271,6 +210,20 @@ window.solone = (function(){
     return Solone;
   }
   
+  function env(v)
+  {
+    if(!v) return __env;
+    __env = (typeof v === 'string' ? v : __env);
+    return Solone;
+  }
+  
+  function debug(v)
+  {
+    if(typeof v === 'undefined') return __debug;
+    __debug= !!v;
+    return Solone;
+  }
+  
   function config()
   {
     return __config;
@@ -282,14 +235,8 @@ window.solone = (function(){
   function Solone(title)
   {
     var query = parseQuery(location.search.replace('?','')),
-        env = (query.env || __config.env),
-        debug = (query.debug || __config.debug);
-    
-    if(!__configsFetched) 
-    {
-      return fetchConfigs()
-      .then(function(){ return getComponent(title, query, env, debug);})
-    }
+        env = (query.env || __config.env || __env),
+        debug = (query.debug || __config.debug || __debug);
     
     return getComponent(title, query, env, debug);
   }
@@ -304,7 +251,9 @@ window.solone = (function(){
     headers: setDescriptor(headers),
     prefix: setDescriptor(prefix),
     base: setDescriptor(base),
-    config: setDescriptor(config)
+    config: setDescriptor(config),
+    env: setDescriptor(env),
+    debug: setDescriptor(debug)
   })
   
   /* AMD AND COMMONJS COMPATABILITY */
