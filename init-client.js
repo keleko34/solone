@@ -5,6 +5,7 @@ window.solone = (function(){
       __uriDecoder,
       __headers,
       __config = __KaleoExtensions__.config || {},
+      __auth = __KaleoExtensions__.authentication || function(info, resolve, reject){ return resolve(); },
       __onAuthorizationFailed = function(){},
       __env = (__config.env || 'dev'),
       __debug = (__config.debug || false);
@@ -178,14 +179,14 @@ window.solone = (function(){
   
   function auth(v)
   {
-    if(typeof v === 'function') Solone.authorization = v;
+    if(typeof v === 'function') Solone.authorization = __KaleoExtensions__.authentication = v;
     return Solone;
   }
   
   function setAuthFailListener(v)
   {
-    if(!v) return __onAuthorizationFailed;
-    __onAuthorizationFailed = (typeof v === 'function' ? v : __onAuthorizationFailed);
+    if(!v) return Solone.onAuthFail;
+    Solone.onAuthFail = (typeof v === 'function' ? v : Solone.onAuthFail);
     return Solone;
   }
   
@@ -237,6 +238,8 @@ window.solone = (function(){
     var query = parseQuery(location.search.replace('?','')),
         env = (query.env || __config.env || __env),
         debug = (query.debug || __config.debug || __debug);
+    
+    Solone.authorization = (__KaleoExtensions__.authentication || __auth);
     
     return getComponent(title, query, env, debug);
   }

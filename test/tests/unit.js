@@ -6,7 +6,7 @@ mocha.setup('bdd');
   window.__KaleoExtensions__ = {components:{}, config:{}};
   
   /* Attach script to head */
-  s = document.createElement('script');
+  var s = document.createElement('script');
   s.type = 'text/javascript';
   s.src = '/init-client.js';
   document.head.appendChild(s);
@@ -20,6 +20,8 @@ mocha.setup('bdd');
       it("Should properly fetch a dev environment component", function(done){
         
         __KaleoExtensions__.components = {};
+        
+        solone.prefix('/test/tests');
         
         solone('a')
         .then(function(){
@@ -149,6 +151,35 @@ mocha.setup('bdd');
         })
       });
       
+      it('Should properly run authentication for components', function(done){
+        var cb = spy();
+        
+        __KaleoExtensions__.components = {};
+        
+        solone.config().env = 'dev';
+        solone.config().debug = undefined;
+        solone.auth(function(info, resolve, reject){
+          if(info.component === 'a') return resolve();
+          return reject();
+        })
+        .setAuthFailListener(cb);
+        
+        Promise.all([
+          solone('a'),
+          solone('b')
+        ])
+        .then(cb)
+        .then(function(a){
+          expect(a).to.equal(__KaleoExtensions__.components.a);
+          expect(cb.callCount).to.equal(2);
+          done();
+        })
+        .catch(function(){
+          expect(true).to.equal(false);
+          done();
+        });
+      });
+      
     });
     
     describe("Fetching from the backend", function(){
@@ -160,6 +191,8 @@ mocha.setup('bdd');
         solone.useBackend = true;
         solone.config().env = 'dev';
         solone.config().debug = undefined;
+        
+        solone.auth(function(info, resolve){ return resolve(); })
         
         solone('a')
         .then(function(){

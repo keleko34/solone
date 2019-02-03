@@ -1,1 +1,0 @@
-__KaleoExtensions__.authentication = function(info, resolve, reject){ return resolve(); }
