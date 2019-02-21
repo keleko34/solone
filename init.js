@@ -13,7 +13,7 @@ else
     for(x;x<len;x++)
     {
       src = scripts[x].getAttribute('src');
-      if(src && src.indexOf('solone') !== -1) return src.replace('/solone/init.js');
+      if(src && src.indexOf('solone') !== -1) return src.replace('/solone/init.js', '');
     }
   }());
   
