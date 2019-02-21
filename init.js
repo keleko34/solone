@@ -5,10 +5,14 @@ if(typeof module !== 'undefined' && typeof process !== 'undefined')
 else
 {
   var localurl = (function(){
-    document.querySelectorAll('script')
-    .forEach(function(v){
-      if(v.src.indexOf('solone') != -1) return v.src.replace('/solone/init.js');
-    })
+    var scripts = document.querySelectorAll('script'),
+        len = scripts.length,
+        x = 0;
+      
+    for(x;x<len;x++)
+    {
+      if(scripts[x].getAttribute('src').indexOf('solone') !== -1) return scripts[x].getAttribute('src').replace('/solone/init.js');
+    }
   }());
   
   if(typeof __KaleoExtensions__ === 'undefined') window.__KaleoExtensions__ = {config:{}};
