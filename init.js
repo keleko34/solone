@@ -6,12 +6,14 @@ else
 {
   var localurl = (function(){
     var scripts = document.querySelectorAll('script'),
+        src,
         len = scripts.length,
         x = 0;
       
     for(x;x<len;x++)
     {
-      if(scripts[x].getAttribute('src').indexOf('solone') !== -1) return scripts[x].getAttribute('src').replace('/solone/init.js');
+      src = scripts[x].getAttribute('src');
+      if(src && src.indexOf('solone') !== -1) return src.replace('/solone/init.js');
     }
   }());
   

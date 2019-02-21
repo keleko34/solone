@@ -329,7 +329,7 @@ mocha.setup('bdd');
     setTimeout(function(){
       solone.prefix('/test/tests');
       mocha.run();
-    }, 100);
+    }, 1000);
   }
   else
   {
