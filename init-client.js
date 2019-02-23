@@ -1,7 +1,7 @@
 window.solone = (function(){
   
   var __config = __KaleoExtensions__.config,
-      __environments = ['dev', 'prod'],
+      __environments = (__config.environments || ['dev', 'prod']),
       __headers = {};
   
   if(!__KaleoExtensions__.authentication) __KaleoExtensions__.authentication = function(info, resolve){ return resolve(); }

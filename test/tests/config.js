@@ -1,7 +1,7 @@
 module.exports = {
   
-  environments: [],
+  environments: ['dev', 'prod'],
   
-  
+  prefix: '/test/tests'
   
 }
