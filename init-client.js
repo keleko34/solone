@@ -1,7 +1,7 @@
 window.solone = (function(){
   
   var __config = __KaleoExtensions__.config,
-      __environments = (__config.environments || ['dev', 'prod']),
+      __environments = ['dev', 'prod'],
       __headers = {};
   
   if(!__KaleoExtensions__.authentication) __KaleoExtensions__.authentication = function(info, resolve){ return resolve(); }
@@ -103,7 +103,7 @@ window.solone = (function(){
     var __headers = (__headers || {});
     
     return new Promise(function(resolve, reject){
-      if(__environments.concat(__config.environments).indexOf(env) === -1) return reject();
+      if((__config.environments || __environments).indexOf(env) === -1) return reject();
       if(!Solone.authorization) return resolve();
       Solone.authorization({component: title, query: query, headers: __headers}, resolve, reject);
     })
