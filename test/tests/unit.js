@@ -5,12 +5,6 @@ mocha.setup('bdd');
   
   window.__KaleoExtensions__ = {components:{}, config:{}};
   
-  /* Attach script to head */
-  var s = document.createElement('script');
-  s.type = 'text/javascript';
-  s.src = '/init-client.js';
-  document.head.appendChild(s);
-  
   describe("Component Fetching:", function(){
     
     describe("Fetching from the frontend", function(){
@@ -324,17 +318,9 @@ mocha.setup('bdd');
     });
   })
   
-  if(!window.solone)
-  {
-    setTimeout(function(){
-      solone.prefix('/test/tests');
-      mocha.run();
-    }, 1000);
-  }
-  else
-  {
+  solone.init(function(){
     solone.prefix('/test/tests');
     mocha.run();
-  }
+  })
   
 }(describe,it,chai.expect,sinon.spy));

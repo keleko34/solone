@@ -244,7 +244,8 @@ window.solone = (function(){
     prefix: setDescriptor(prefix),
     config: setDescriptor(config),
     env: setDescriptor(env),
-    debug: setDescriptor(debug)
+    debug: setDescriptor(debug),
+    init: setDescriptor(window.solone.init)
   })
   
   /* AMD AND COMMONJS COMPATABILITY */
