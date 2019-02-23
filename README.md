@@ -18,7 +18,7 @@ Table of contents
    
 What is it?
 ==========
-This library allows to fetch the files for usable components in the kaleo framework using the kaleo configs and url queries to determine the files to fetch based on environments
+This library allows to fetch the files for usable components in the kaleo framework using the kaleo configs and url queries to determine the files to fetch based on environments and can be used both for the frontend and the backend
 
 Installation
 ============
@@ -30,18 +30,44 @@ This libray can be installed using:
  
 Getting started
 ============
-The script can be loaded both in the head and in the body. 
-All functionality is automatically loaded as soon as the file is loaded.
-*Note: include this script before any other scripts for proper implementation* 
+The script can be loaded both in the head and in the body.
 ```
  <script src="/(node_modules|bower_modules)/solone/init.min.js"></script>
 ```
 
-To start using it is simple as call the main method with the name of the component which fetches the component using a promise
+To use the library is determined whether you are using it for Node or for the frontend
+
+Express (Node)
 ```
- solone('component')
- .then(console.log) // logs component function
- .catch(console.error) // in case the component does not exist
+ var solone = require('solone');
+ var express = require('express')();
+ express.use(solone);
+```
+
+Connect (Node)
+```
+ var solone = require('solone');
+ var connect = require('connect')();
+ connect.use(testServer);
+```
+Native (Node)
+```
+ var solone = require('solone');
+ var http = require('http');
+ http.createServer(function(req, res){
+    return solone(req,res,function(){});
+ });
+```
+
+The browser requires an init to properly fetch required files that it uses
+
+Browser
+```
+ solone.init(function(){
+   solone('component')
+   .then(console.log) // logs component function
+   .catch(console.error) // in case the component does not exist
+ })
 ```
 
 Environment
