@@ -1,7 +1,7 @@
 var connect = require('connect')(),
     static = require('serve-static'),
     open = require('opn'),
-    testServer = require('../init-server.js'),
+    testServer = require('../solone-server.js'),
     base = process.cwd().replace(/\\/g,'/');
 
 testServer.prefix('/test/tests')

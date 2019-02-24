@@ -31,8 +31,15 @@ This libray can be installed using:
 Getting started
 ============
 The script can be loaded both in the head and in the body.
+
+Browser
 ```
- <script src="/(node_modules|bower_modules)/solone/init.min.js"></script>
+ <script src="/(node_modules|bower_modules)/solone/solone.min.js"></script>
+```
+
+Node
+```
+var solone = require('solone');
 ```
 
 To use the library is determined whether you are using it for Node or for the frontend
