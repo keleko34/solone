@@ -1,6 +1,6 @@
 {
   "name": "solone",
-  "version": "1.2.2",
+  "version": "1.2.3",
   "description": "A component file routing system",
   "main": "solone.js",
   "scripts": {
