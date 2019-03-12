@@ -65,8 +65,8 @@ window.solone = (function(){
     ])
     .then(function(js, html, css){
        var script = createScript(title, ''
-        + '//@ sourceUrl=' + location.origin + '/components/' + title + '.js\r\n'
-        + '//# sourceUrl=' + location.origin + '/components/' + title + '.js\r\n'
+        + '//@ sourceURL=' + location.origin + '/components/' + title + '.js\r\n'
+        + '//# sourceURL=' + location.origin + '/components/' + title + '.js\r\n'
         + '__KaleoExtensions__.components["'+title+'"] = (function(){\r\n' + js
         + '\r\n'+title+'.prototype.__extensionsHTML__ = "'+html.replace(/[\r\n]/g,'').replace(/[\"]/g,"'")+'";'
         + '\r\n'+title+'.prototype.__extensionsCSS__ = "'+css.replace(/[\r\n]/g,'').replace(/[\"]/g,"'")+'";'
@@ -87,8 +87,8 @@ window.solone = (function(){
     .then(function(v){
       
       var script = createScript(title, ''
-        + '//@ sourceUrl=' + location.origin + '/components/' + title + (!debug ? '.min' : '') + '.js\r\n'
-        + '//# sourceUrl=' + location.origin + '/components/' + title + (!debug ? '.min' : '') + '.js\r\n'
+        + '//@ sourceURL=' + location.origin + '/components/' + title + (!debug ? '.min' : '') + '.js\r\n'
+        + '//# sourceURL=' + location.origin + '/components/' + title + (!debug ? '.min' : '') + '.js\r\n'
         + '__KaleoExtensions__.components["'+title+'"] = (function(){\r\n' + v
         + '\r\nreturn '+title+';\r\n}());');
       
@@ -118,8 +118,8 @@ window.solone = (function(){
         return fetchFile(__config.prefix + '/' + title + location.search, __headers)
         .then(function(v){
           var script = createScript(title, ''
-            + '//@ sourceUrl=' + location.origin + '/components/' + title + (!debug ? '.min' : '') + '.js\r\n'
-            + '//# sourceUrl=' + location.origin + '/components/' + title + (!debug ? '.min' : '') + '.js\r\n'
+            + '//@ sourceURL=' + location.origin + '/components/' + title + (!debug ? '.min' : '') + '.js\r\n'
+            + '//# sourceURL=' + location.origin + '/components/' + title + (!debug ? '.min' : '') + '.js\r\n'
             + v);
           
           script.setAttribute('env', env);
