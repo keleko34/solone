@@ -65,10 +65,12 @@ window.solone = (function(){
     ])
     .then(function(js, html, css){
        var script = createScript(title, ''
+        + '//# sourceUrl=' + location.origin + '/components/' + title + '.js\r\n'
         + '__KaleoExtensions__.components["'+title+'"] = (function(){\r\n' + js
         + '\r\n'+title+'.prototype.__extensionsHTML__ = "'+html.replace(/[\r\n]/g,'').replace(/[\"]/g,"'")+'";'
         + '\r\n'+title+'.prototype.__extensionsCSS__ = "'+css.replace(/[\r\n]/g,'').replace(/[\"]/g,"'")+'";'
-        + '\r\nreturn '+title+';\r\n}());');
+        + '\r\nreturn '+title+';\r\n}());\r\n'
+        + '//@ sourceUrl=' + location.origin + '/components/' + title + '.js');
       
       script.setAttribute('env', 'dev');
       
@@ -85,8 +87,10 @@ window.solone = (function(){
     .then(function(v){
       
       var script = createScript(title, ''
+        + '//# sourceUrl=' + location.origin + '/components/' + title + (!debug ? '.min' : '') + '.js\r\n'
         + '__KaleoExtensions__.components["'+title+'"] = (function(){\r\n' + v
-        + '\r\nreturn '+title+';\r\n}());');
+        + '\r\nreturn '+title+';\r\n}());\r\n'
+        + '//@ sourceUrl=' + location.origin + '/components/' + title + (!debug ? '.min' : '') + '.js');
       
       script.setAttribute('env', env);
       if(debug) script.setAttribute('debug', debug);
@@ -113,7 +117,10 @@ window.solone = (function(){
       {
         return fetchFile(__config.prefix + '/' + title + location.search, __headers)
         .then(function(v){
-          var script = createScript(title, v);
+          var script = createScript(title, ''
+            + '//# sourceUrl=' + location.origin + '/components/' + title + (!debug ? '.min' : '') + '.js\r\n'
+            + v + '\r\n'
+            + '//@ sourceUrl=' + location.origin + '/components/' + title + (!debug ? '.min' : '') + '.js');
           
           script.setAttribute('env', env);
           if(debug) script.setAttribute('debug', debug);
