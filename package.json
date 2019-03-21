@@ -51,7 +51,7 @@
       "module": true,
       "Promise": true,
       "solone": true,
-      "__KaleoExtensions__": true,
+      "__KaleoiExtensions__": true,
       "node_config": true,
       "local_config": true
     },

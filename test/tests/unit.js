@@ -3,17 +3,17 @@ mocha.setup('bdd');
 (function(describe,it,expect,spy){
   /* mocha tests */
   
-  window.__KaleoExtensions__ = {components:{}, config:{}};
+  window.__KaleoiExtensions__ = {components:{}, config:{}};
   
   describe("Component Fetching:", function(){
     
     describe("Fetching from the frontend", function(){
       
-      __KaleoExtensions__.components = {};
+      __KaleoiExtensions__.components = {};
       
       it("Should properly fetch a dev environment component", function(done){
         
-        __KaleoExtensions__.components = {};
+        __KaleoiExtensions__.components = {};
         
         solone.prefix('/test/tests');
         
@@ -21,9 +21,9 @@ mocha.setup('bdd');
         .then(function(){
           var s = document.querySelector('script[title="a"][env="dev"]');
           
-          expect(__KaleoExtensions__.components.a).to.not.equal(undefined);
-          expect(__KaleoExtensions__.components.a.prototype.__extensionsCSS__).to.not.equal(undefined);
-          expect(__KaleoExtensions__.components.a.prototype.__extensionsHTML__).to.not.equal(undefined);
+          expect(__KaleoiExtensions__.components.a).to.not.equal(undefined);
+          expect(__KaleoiExtensions__.components.a.prototype.__extensionsCSS__).to.not.equal(undefined);
+          expect(__KaleoiExtensions__.components.a.prototype.__extensionsHTML__).to.not.equal(undefined);
           expect(s).to.not.equal(null);
           
           s.parentElement.removeChild(s);
@@ -38,7 +38,7 @@ mocha.setup('bdd');
       
       it('Should properly fetch a prod environment component', function(done){
         
-        __KaleoExtensions__.components = {};
+        __KaleoiExtensions__.components = {};
         
         solone.config().env = 'prod';
         
@@ -46,9 +46,9 @@ mocha.setup('bdd');
         .then(function(){
           var s = document.querySelector('script[title="a"][env="prod"]')
           
-          expect(__KaleoExtensions__.components.a).to.not.equal(undefined);
-          expect(__KaleoExtensions__.components.a.prototype.__extensionsCSS__).to.not.equal(undefined);
-          expect(__KaleoExtensions__.components.a.prototype.__extensionsHTML__).to.not.equal(undefined);
+          expect(__KaleoiExtensions__.components.a).to.not.equal(undefined);
+          expect(__KaleoiExtensions__.components.a.prototype.__extensionsCSS__).to.not.equal(undefined);
+          expect(__KaleoiExtensions__.components.a.prototype.__extensionsHTML__).to.not.equal(undefined);
           expect(s).to.not.equal(null);
           
           s.parentElement.removeChild(s);
@@ -62,7 +62,7 @@ mocha.setup('bdd');
       
       it('Should properly fetch a debug component from a minified environment', function(done){
         
-        __KaleoExtensions__.components = {};
+        __KaleoiExtensions__.components = {};
         
         solone.config().env = 'prod';
         solone.config().debug = true;
@@ -71,9 +71,9 @@ mocha.setup('bdd');
         .then(function(){
           var s = document.querySelector('script[title="a"][env="prod"][debug="true"]');
           
-          expect(__KaleoExtensions__.components.a).to.not.equal(undefined);
-          expect(__KaleoExtensions__.components.a.prototype.__extensionsCSS__).to.not.equal(undefined);
-          expect(__KaleoExtensions__.components.a.prototype.__extensionsHTML__).to.not.equal(undefined);
+          expect(__KaleoiExtensions__.components.a).to.not.equal(undefined);
+          expect(__KaleoiExtensions__.components.a.prototype.__extensionsCSS__).to.not.equal(undefined);
+          expect(__KaleoiExtensions__.components.a.prototype.__extensionsHTML__).to.not.equal(undefined);
           expect(s).to.not.equal(null);
           
           s.parentElement.removeChild(s);
@@ -87,7 +87,7 @@ mocha.setup('bdd');
       
       it('Should properly fetch multiple components in sync', function(done){
         
-        __KaleoExtensions__.components = {};
+        __KaleoiExtensions__.components = {};
         
         solone.config().env = 'dev';
         solone.config().debug = undefined;
@@ -100,8 +100,8 @@ mocha.setup('bdd');
           var sa = document.querySelector('script[title="a"][env="dev"]'),
               sb = document.querySelector('script[title="b"][env="dev"]');
           
-          expect(a).to.equal(__KaleoExtensions__.components.a);
-          expect(b).to.equal(__KaleoExtensions__.components.b);
+          expect(a).to.equal(__KaleoiExtensions__.components.a);
+          expect(b).to.equal(__KaleoiExtensions__.components.b);
           expect(sa).to.not.equal(null);
           expect(sb).to.not.equal(null);
           
@@ -117,7 +117,7 @@ mocha.setup('bdd');
       
       it('Should properly fetch multiple components in async', function(done){
         
-        __KaleoExtensions__.components = {};
+        __KaleoiExtensions__.components = {};
         
         solone.config().env = 'dev';
         solone.config().debug = undefined;
@@ -130,8 +130,8 @@ mocha.setup('bdd');
           var sa = document.querySelector('script[title="a"][env="dev"]'),
               sb = document.querySelector('script[title="b"][env="dev"]');
           
-          expect(a).to.equal(__KaleoExtensions__.components.a);
-          expect(b).to.equal(__KaleoExtensions__.components.b);
+          expect(a).to.equal(__KaleoiExtensions__.components.a);
+          expect(b).to.equal(__KaleoiExtensions__.components.b);
           expect(sa).to.not.equal(null);
           expect(sb).to.not.equal(null);
           
@@ -148,7 +148,7 @@ mocha.setup('bdd');
       it('Should properly run authentication for components', function(done){
         var cb = spy();
         
-        __KaleoExtensions__.components = {};
+        __KaleoiExtensions__.components = {};
         
         solone.config().env = 'dev';
         solone.config().debug = undefined;
@@ -164,7 +164,7 @@ mocha.setup('bdd');
         ])
         .then(cb)
         .then(function(a){
-          expect(a).to.equal(__KaleoExtensions__.components.a);
+          expect(a).to.equal(__KaleoiExtensions__.components.a);
           expect(cb.callCount).to.equal(2);
           done();
         })
@@ -178,10 +178,10 @@ mocha.setup('bdd');
     
     describe("Fetching from the backend", function(){
       
-      __KaleoExtensions__.components = {};
+      __KaleoiExtensions__.components = {};
       
       it('Should properly fetch a dev environment component', function(done){
-        __KaleoExtensions__.components = {};
+        __KaleoiExtensions__.components = {};
         solone.useBackend = true;
         solone.config().env = 'dev';
         solone.config().debug = undefined;
@@ -192,9 +192,9 @@ mocha.setup('bdd');
         .then(function(){
           var s = document.querySelector('script[title="a"][env="dev"]');
           
-          expect(__KaleoExtensions__.components.a).to.not.equal(undefined);
-          expect(__KaleoExtensions__.components.a.prototype.__extensionsCSS__).to.not.equal(undefined);
-          expect(__KaleoExtensions__.components.a.prototype.__extensionsHTML__).to.not.equal(undefined);
+          expect(__KaleoiExtensions__.components.a).to.not.equal(undefined);
+          expect(__KaleoiExtensions__.components.a.prototype.__extensionsCSS__).to.not.equal(undefined);
+          expect(__KaleoiExtensions__.components.a.prototype.__extensionsHTML__).to.not.equal(undefined);
           expect(s).to.not.equal(null);
           
           s.parentElement.removeChild(s);
@@ -209,7 +209,7 @@ mocha.setup('bdd');
       
       it('Should properly fetch a prod environment component', function(done){
         
-        __KaleoExtensions__.components = {};
+        __KaleoiExtensions__.components = {};
         
         solone.config().env = 'prod';
         
@@ -217,9 +217,9 @@ mocha.setup('bdd');
         .then(function(){
           var s = document.querySelector('script[title="a"][env="prod"]');
           
-          expect(__KaleoExtensions__.components.a).to.not.equal(undefined);
-          expect(__KaleoExtensions__.components.a.prototype.__extensionsCSS__).to.not.equal(undefined);
-          expect(__KaleoExtensions__.components.a.prototype.__extensionsHTML__).to.not.equal(undefined);
+          expect(__KaleoiExtensions__.components.a).to.not.equal(undefined);
+          expect(__KaleoiExtensions__.components.a.prototype.__extensionsCSS__).to.not.equal(undefined);
+          expect(__KaleoiExtensions__.components.a.prototype.__extensionsHTML__).to.not.equal(undefined);
           expect(s).to.not.equal(null);
           
           s.parentElement.removeChild(s);
@@ -233,7 +233,7 @@ mocha.setup('bdd');
       
       it('Should properly fetch a debug component from a minified environment', function(done){
         
-        __KaleoExtensions__.components = {};
+        __KaleoiExtensions__.components = {};
         
         solone.config().env = 'prod';
         solone.config().debug = true;
@@ -242,9 +242,9 @@ mocha.setup('bdd');
         .then(function(){
           var s = document.querySelector('script[title="a"][env="prod"][debug="true"]');
           
-          expect(__KaleoExtensions__.components.a).to.not.equal(undefined);
-          expect(__KaleoExtensions__.components.a.prototype.__extensionsCSS__).to.not.equal(undefined);
-          expect(__KaleoExtensions__.components.a.prototype.__extensionsHTML__).to.not.equal(undefined);
+          expect(__KaleoiExtensions__.components.a).to.not.equal(undefined);
+          expect(__KaleoiExtensions__.components.a.prototype.__extensionsCSS__).to.not.equal(undefined);
+          expect(__KaleoiExtensions__.components.a.prototype.__extensionsHTML__).to.not.equal(undefined);
           expect(s).to.not.equal(null);
           
           s.parentElement.removeChild(s);
@@ -258,7 +258,7 @@ mocha.setup('bdd');
       
       it('Should properly fetch multiple components in sync', function(done){
         
-        __KaleoExtensions__.components = {};
+        __KaleoiExtensions__.components = {};
         
         solone.config().env = 'dev';
         solone.config().debug = undefined;
@@ -271,8 +271,8 @@ mocha.setup('bdd');
           var sa = document.querySelector('script[title="a"][env="dev"]'),
               sb = document.querySelector('script[title="b"][env="dev"]');
           
-          expect(a).to.equal(__KaleoExtensions__.components.a);
-          expect(b).to.equal(__KaleoExtensions__.components.b);
+          expect(a).to.equal(__KaleoiExtensions__.components.a);
+          expect(b).to.equal(__KaleoiExtensions__.components.b);
           expect(sa).to.not.equal(null);
           expect(sb).to.not.equal(null);
           
@@ -288,7 +288,7 @@ mocha.setup('bdd');
       
       it('Should properly fetch multiple components in async', function(done){
         
-        __KaleoExtensions__.components = {};
+        __KaleoiExtensions__.components = {};
         
         solone.config().env = 'dev';
         solone.config().debug = undefined;
@@ -301,8 +301,8 @@ mocha.setup('bdd');
           var sa = document.querySelector('script[title="a"][env="dev"]'),
               sb = document.querySelector('script[title="b"][env="dev"]');
           
-          expect(a).to.equal(__KaleoExtensions__.components.a);
-          expect(b).to.equal(__KaleoExtensions__.components.b);
+          expect(a).to.equal(__KaleoiExtensions__.components.a);
+          expect(b).to.equal(__KaleoiExtensions__.components.b);
           expect(sa).to.not.equal(null);
           expect(sb).to.not.equal(null);
           

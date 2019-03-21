@@ -7,7 +7,7 @@ else
   window.solone = function(){};
   window.solone.init = function(cb){
     
-    if(typeof __KaleoExtensions__ === 'undefined') window.__KaleoExtensions__ = {config:{}};
+    if(typeof __KaleoiExtensions__ === 'undefined') window.__KaleoiExtensions__ = {config:{}};
     
     var localurl = (function(){
       var scripts = document.querySelectorAll('script'),

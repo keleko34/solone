@@ -250,7 +250,7 @@ module.exports = (function(){
     if(files)
     {
       return stream.pipe(preappend(
-          '__KaleoExtensions__.components["'+title+'"] = (function(){\r\n',
+          '__KaleoiExtensions__.components["'+title+'"] = (function(){\r\n',
           '\r\n'+title+'.prototype.__extensionsHTML__ = "'+files.html.replace(/[\r\n]/g,'').replace(/[\"]/g,"'")+'";'
         + '\r\n'+title+'.prototype.__extensionsCSS__ = "'+files.css.replace(/[\r\n]/g,'').replace(/[\"]/g,"'")+'";'
         + '\r\nreturn '+title+';\r\n}());'
@@ -259,7 +259,7 @@ module.exports = (function(){
     else
     {
       return stream.pipe(preappend(
-          '__KaleoExtensions__.components['+title+'] = (function(){\r\n',
+          '__KaleoiExtensions__.components['+title+'] = (function(){\r\n',
           '\r\nreturn '+title+';\r\n}());'
       ));
     }

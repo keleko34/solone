@@ -1,10 +1,10 @@
 window.solone = (function(){
   
-  var __config = __KaleoExtensions__.config,
+  var __config = __KaleoiExtensions__.config,
       __environments = ['dev', 'prod'],
       __headers = {};
   
-  if(!__KaleoExtensions__.authentication) __KaleoExtensions__.authentication = function(info, resolve){ return resolve(); }
+  if(!__KaleoiExtensions__.authentication) __KaleoiExtensions__.authentication = function(info, resolve){ return resolve(); }
   
   /* HELPER METHODS */
   /* REGION */
@@ -67,14 +67,14 @@ window.solone = (function(){
        var script = createScript(title, ''
         + '//@ sourceURL=' + location.origin + '/components/' + title + '.js\r\n'
         + '//# sourceURL=' + location.origin + '/components/' + title + '.js\r\n'
-        + '__KaleoExtensions__.components["'+title+'"] = (function(){\r\n' + js
+        + '__KaleoiExtensions__.components["'+title+'"] = (function(){\r\n' + js
         + '\r\n'+title+'.prototype.__extensionsHTML__ = "'+html.replace(/[\r\n]/g,'').replace(/[\"]/g,"'")+'";'
         + '\r\n'+title+'.prototype.__extensionsCSS__ = "'+css.replace(/[\r\n]/g,'').replace(/[\"]/g,"'")+'";'
         + '\r\nreturn '+title+';\r\n}());');
       
       script.setAttribute('env', 'dev');
       
-      return __KaleoExtensions__.components[title];
+      return __KaleoiExtensions__.components[title];
     })
     .catch(function(){
       console.error("ERR! failed to fetch", title, arguments);
@@ -89,13 +89,13 @@ window.solone = (function(){
       var script = createScript(title, ''
         + '//@ sourceURL=' + location.origin + '/components/' + title + (!debug ? '.min' : '') + '.js\r\n'
         + '//# sourceURL=' + location.origin + '/components/' + title + (!debug ? '.min' : '') + '.js\r\n'
-        + '__KaleoExtensions__.components["'+title+'"] = (function(){\r\n' + v
+        + '__KaleoiExtensions__.components["'+title+'"] = (function(){\r\n' + v
         + '\r\nreturn '+title+';\r\n}());');
       
       script.setAttribute('env', env);
       if(debug) script.setAttribute('debug', debug);
       
-      return __KaleoExtensions__.components[title];
+      return __KaleoiExtensions__.components[title];
     })
     .catch(function(v){
       console.error("ERR! failed to fetch", title, v);
@@ -112,7 +112,7 @@ window.solone = (function(){
       Solone.authorization({component: title, query: query, headers: __headers}, resolve, reject);
     })
     .then(function(){
-      if(__KaleoExtensions__.components[title]) return __KaleoExtensions__.components[title];
+      if(__KaleoiExtensions__.components[title]) return __KaleoiExtensions__.components[title];
       if(Solone.useBackend)
       {
         return fetchFile(__config.prefix + '/' + title + location.search, __headers)
@@ -125,7 +125,7 @@ window.solone = (function(){
           script.setAttribute('env', env);
           if(debug) script.setAttribute('debug', debug);
           
-          return __KaleoExtensions__.components[title];
+          return __KaleoiExtensions__.components[title];
         });
       }
       return ((env === 'dev' || !env) ? fetchDevFiles(title, __headers) : fetchComponent(title, env, debug, __headers));
@@ -182,7 +182,7 @@ window.solone = (function(){
   
   function auth(v)
   {
-    if(typeof v === 'function') Solone.authorization = __KaleoExtensions__.authentication = v;
+    if(typeof v === 'function') Solone.authorization = __KaleoiExtensions__.authentication = v;
     return Solone;
   }
   
@@ -235,7 +235,7 @@ window.solone = (function(){
         env = (query.env || __config.env || 'dev'),
         debug = (query.debug || __config.debug || false);
     
-    Solone.authorization = __KaleoExtensions__.authentication;
+    Solone.authorization = __KaleoiExtensions__.authentication;
     
     return getComponent(title, query, env, debug);
   }
