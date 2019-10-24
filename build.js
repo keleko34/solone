@@ -2,7 +2,7 @@ var base = process.cwd().replace(/\\/g,'/'),
     fs = require('fs'),
     closureCompiler = require('google-closure-compiler-js').compile;
 
-console.log("Building Libraries...");
+console.log("Building Solone Libraries...");
 
 function flags(src)
 {
@@ -12,6 +12,10 @@ function flags(src)
     rewritePolyfills: false
   }
 }
+
+fs.unlinkSync(base+'/solone.min.js');
+fs.unlinkSync(base+'/solone-client.min.js');
+fs.unlinkSync(base+'/solone-server.min.js');
 
 fs.writeFileSync(base+'/solone.min.js',closureCompiler(flags('/solone.js')).compiledCode.replace('solone.js','solone.min.js').replace('solone-client', 'solone-client.min').replace('solone-server', 'solone-server.min'));
 fs.writeFileSync(base+'/solone-client.min.js',closureCompiler(flags('/solone-client.js')).compiledCode);
