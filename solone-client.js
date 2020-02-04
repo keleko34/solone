@@ -1,260 +1,205 @@
-window.solone = (function(){
-  
-  var __config = __KaleoiExtensions__.config,
-      __environments = ['dev', 'prod'],
-      __headers = {};
-  
-  if(!__KaleoiExtensions__.authentication) __KaleoiExtensions__.authentication = function(info, resolve){ return resolve(); }
-  
+window.solone = (function() {
+  if(!__KaleoiExtensions__.config) {
+    __KaleoiExtensions__.config = {
+      env: 'dev',
+      environments: ['dev', 'prod'],
+      designPatterns: ['atoms', 'molecules', 'organisms', 'templates', 'pages']
+    };
+  }
+
+  if(!__KaleoiExtensions__.authentication) {
+    __KaleoiExtensions__.authentication = __KaleoiExtensions__.config.authentication || function() { return Promise.resolve(); };
+  }
+
   /* HELPER METHODS */
   /* REGION */
-  
-  function createScript(title, script)
-  {
-    var sc = document.createElement('script');
-    sc.title = title;
-    sc.type = 'text/javascript';
-    sc.textContent = script;
-    document.head.appendChild(sc);
-    return sc;
-  }
-  
-  function fetchFile(url, headers)
-  {
-    return new Promise(function(resolve, reject){
-      
-      headers = (headers || __headers);
-    
-      var __xhr = new XMLHttpRequest()
 
-      __xhr.open('GET', url, true);
-
-      if(headers)
-      {
-        Object.keys(headers)
-        .forEach(function(v){
-          __xhr.setRequestHeader(v, headers[v]);
-        })
-      }
-      
-      __xhr.onreadystatechange = function()
-      {
-        if(__xhr.readyState === 4)
-        {
-          if(__xhr.status === 200)
-          {
-            resolve(__xhr.responseText);
-          }
-          else
-          {
-            reject(new Error(__xhr.status));
-          }
-        }
-      }
-      
-      __xhr.send();
-    });
-  }
-  
-  function fetchDevFiles(title, headers)
-  {
-    return Promise.all([
-      fetchFile(__config.prefix + '/components/' + title + '/' + title + '.js', headers),
-      fetchFile(__config.prefix + '/components/' + title + '/' + title + '.html', headers),
-      fetchFile(__config.prefix + '/components/' + title + '/' + title + '.css', headers)
-    ])
-    .then(function(js, html, css){
-       var script = createScript(title, ''
-        + '//@ sourceURL=' + location.origin + '/components/' + title + '.js\r\n'
-        + '//# sourceURL=' + location.origin + '/components/' + title + '.js\r\n'
-        + '__KaleoiExtensions__.components["'+title+'"] = (function(){\r\n' + js
-        + '\r\n'+title+'.prototype.__extensionsHTML__ = "'+html.replace(/[\r\n]/g,'').replace(/[\"]/g,"'")+'";'
-        + '\r\n'+title+'.prototype.__extensionsCSS__ = "'+css.replace(/[\r\n]/g,'').replace(/[\"]/g,"'")+'";'
-        + '\r\nreturn '+title+';\r\n}());');
-      
-      script.setAttribute('env', 'dev');
-      
-      return __KaleoiExtensions__.components[title];
-    })
-    .catch(function(){
-      console.error("ERR! failed to fetch", title, arguments);
-    });
-  }
-  
-  function fetchComponent(title, env, debug, headers)
-  {
-    return fetchFile(__config.prefix + '/components/' + title + '/' + env + '/' + title + (!debug ? '.min' : '') + '.js', headers)
-    .then(function(v){
-      
-      var script = createScript(title, ''
-        + '//@ sourceURL=' + location.origin + '/components/' + title + (!debug ? '.min' : '') + '.js\r\n'
-        + '//# sourceURL=' + location.origin + '/components/' + title + (!debug ? '.min' : '') + '.js\r\n'
-        + '__KaleoiExtensions__.components["'+title+'"] = (function(){\r\n' + v
-        + '\r\nreturn '+title+';\r\n}());');
-      
-      script.setAttribute('env', env);
-      if(debug) script.setAttribute('debug', debug);
-      
-      return __KaleoiExtensions__.components[title];
-    })
-    .catch(function(v){
-      console.error("ERR! failed to fetch", title, v);
-    })
-  }
-  
-  function getComponent(title, query, env, debug)
-  {
-    var __headers = (__headers || {});
-    
-    return new Promise(function(resolve, reject){
-      if((__config.environments || __environments).indexOf(env) === -1) return reject();
-      if(!Solone.authorization) return resolve();
-      Solone.authorization({component: title, query: query, headers: __headers}, resolve, reject);
-    })
-    .then(function(){
-      if(__KaleoiExtensions__.components[title]) return __KaleoiExtensions__.components[title];
-      if(Solone.useBackend)
-      {
-        return fetchFile(__config.prefix + '/' + title + location.search, __headers)
-        .then(function(v){
-          var script = createScript(title, ''
-            + '//@ sourceURL=' + location.origin + '/components/' + title + (!debug ? '.min' : '') + '.js\r\n'
-            + '//# sourceURL=' + location.origin + '/components/' + title + (!debug ? '.min' : '') + '.js\r\n'
-            + v);
-          
-          script.setAttribute('env', env);
-          if(debug) script.setAttribute('debug', debug);
-          
-          return __KaleoiExtensions__.components[title];
-        });
-      }
-      return ((env === 'dev' || !env) ? fetchDevFiles(title, __headers) : fetchComponent(title, env, debug, __headers));
-    })
-    .catch(function(v){
-      if(Solone.authorization) return Solone.onAuthFail(title, query);
-      console.error('ERR! component fetch failed', title, env, debug, v.stack);
-    })
-  }
-  
-  function parseQuery(params)
-  {
-    if(!params) return {env: (__config.env || 'dev')};
-    return (__config.uriDecoder ? __config.uriDecoder(params) : decodeURIComponent(params)).split(/[\&]/g)
-    .reduce(function(obj, v){
-      var split = v.split('=');
-      if(split.length === 1)
-      {
-        obj[split[0]] = true;
-      }
-      else
-      {
-        obj[split[0]] = split[1];
-      }
-      return obj;
-    }, {})
-  }
-  
-  /* ENDREGION */
-  
-  /* DESCRIPTORS */
-  /* REGION */
-  
-  function setDescriptor(v, writable, enumerable)
+  function setDescriptor(value, writable, enumerable)
   {
     return {
-      value: v,
+      value: value,
       writable: !!writable,
       enumerable: !!enumerable,
       configurable: false
     }
   }
-  
+
+  function setRelatedDescriptor(key, obj)
+  {
+    return {
+      get: function() { return obj[key]; },
+      set: function(v) { obj[key] = v; },
+      enumerable: true,
+      configurable: true
+    }
+  }
+
+  function parse(query)
+  {
+    if(!query) return { env: Solone.env };
+    return (Solone.uriDecoder ? Solone.uriDecoder(query) : decodeURIComponent(query)).split(/[\&]/g)
+      .reduce(function(obj, v) {
+        var split = v.split('=');
+        if(split.length === 1)
+        {
+          obj[split[0]] = true;
+        }
+        else
+        {
+          obj[split[0]] = split[1];
+        }
+        return obj;
+      }, { env: Solone.env });
+  }
+
+  function createScript(title, env, debug, text)
+  {
+    var script = document.createElement('script');
+    if(debug) script.setAttribute('debug', debug);
+    script.setAttribute('env', env);
+    script.title = title;
+    script.type = 'text/javascript';
+    script.textContent = text;
+    document.head.appendChild(script);
+    return script;
+  }
+
+  function fetchFile(url)
+  {
+    return new Promise(function(resolve, reject){
+      var xhr = new XMLHttpRequest(),
+          headers = Object.keys(Solone.headers || {}),
+          len = headers.length;
+
+      xhr.open('GET', url, true);
+
+      if(len)
+      {
+        var x = 0;
+        for(x;x<len;x++)
+        {
+          xhr.setRequestHeader(headers[x], __headers[headers[x]]);
+        }
+      }
+
+      xhr.onreadystatechange = function()
+      {
+        if(xhr.readyState === 4)
+        {
+          if(xhr.status === 200) return resolve(xhr.responseText);
+          return reject(new Error(xhr.status));
+        }
+      }
+
+      xhr.send();
+    });
+  }
+
+  function concatDevFiles(title, type, js, html, css)
+  {
+    js = (js || "function " + title + "() {\r\nconsole.error('NO JS COMPONENT FOR '" + title +");\r\n}");
+    return ''
+    + '//@ sourceURL=' + location.origin + '/components/' + (type ? type + '/' : '') + title + '.js\r\n'
+    + '//# sourceURL=' + location.origin + '/components/' + (type ? type + '/' : '') + title + '.js\r\n'
+    + '__KaleoiExtensions__.components["' + title + '"] = (function(){\r\n\t' + js.replace(/(\r\n)/g, '\r\n\t')
+    + '\r\n\t' + title + '.prototype.__extensionsHTML__ = "' + html.replace(/[\r\n]/g,'').replace(/[\"]/g,"'") + '";'
+    + '\r\n\t' + title + '.prototype.__extensionsCSS__ = "' + css.replace(/[\r\n]/g,'').replace(/[\"]/g,"'") + '";'
+    + '\r\n\treturn ' + title + ';\r\n}());';
+  }
+
+  function concatFile(title, type, debug, js)
+  {
+    js = (js || "function " + title + "() {\r\nconsole.error('NO JS COMPONENT FOR '" + title +");\r\n}");
+    return ''
+    + '//@ sourceURL=' + location.origin + '/components/'+ (type ? type + '/' : '') + title + (!debug ? '.min' : '') + '.js\r\n'
+    + '//# sourceURL=' + location.origin + '/components/'+ (type ? type + '/' : '') + title + (!debug ? '.min' : '') + '.js\r\n'
+    + '__KaleoiExtensions__.components["' + title + '"] = (function(){\r\n\t' + js.replace(/(\r\n)/g, '\r\n\t')
+    + '\r\n\treturn ' + title + ';\r\n}());'
+  }
+
+  function concatBackendFile(title, type, debug, js)
+  {
+    js = (js || "function " + title + "() {\r\nconsole.error('NO JS COMPONENT FOR '" + title +");\r\n}");
+    return ''
+    + (js.indexOf('//@ sourceURL=') === -1 ? '//@ sourceURL=' + location.origin + '/components/'+ (type ? type + '/' : '') + title + (!debug ? '.min' : '') + '.js\r\n'  : '')
+    + (js.indexOf('//# sourceURL=') === -1 ? '//# sourceURL=' + location.origin + '/components/'+ (type ? type + '/' : '') + title + (!debug ? '.min' : '') + '.js\r\n'  : '')
+    + js;
+  }
+
+  function fetchComponent(title, env, debug, designPattern)
+  {
+    var base = Solone.prefix + '/components/' + (designPattern ? designPattern + '/' : '') + title;
+
+    if(env === 'dev')
+    {
+      return Promise.all([
+        fetchFile(base + '/' + title + '.js'),
+        fetchFile(base + '/' + title + '.html'),
+        fetchFile(base + '/' + title + '.css')
+      ])
+      .then(function(files) {
+        createScript(title, env, false, concatDevFiles(title, designPattern, files[0], files[1], files[2]));
+        return __KaleoiExtensions__.components[title];
+      })
+      .catch(function(err){ console.error(err, title, env); });
+    }
+    return fetchFile(base + '/' + env + '/' + title + (!debug ? '.min' : '') + '.js')
+      .then(function(js) {
+        createScript(title, env, debug, concatFile(title, designPattern, debug, js));
+        return __KaleoiExtensions__.components[title];
+      })
+      .catch(function(err){ console.error(err, title, env); })
+  }
+
   /* ENDREGION */
-  
-  /* LOCAL PROPERTY METHODS */
-  /* REGION */
-  
-  function backendRouting()
-  {
-    Solone.useBackend = __config.backendRouting = true;
-    return Solone;
-  }
-  
-  function auth(v)
-  {
-    if(typeof v === 'function') Solone.authorization = __KaleoiExtensions__.authentication = v;
-    return Solone;
-  }
-  
-  function setAuthFailListener(v)
-  {
-    if(!v) return Solone.onAuthFail;
-    Solone.onAuthFail = (typeof v === 'function' ? v : Solone.onAuthFail);
-    return Solone;
-  }
-  
-  function prefix(v)
-  {
-    if(!v) return __config.prefix;
-    __config.prefix = (typeof v === 'string' ? v : __config.prefix);
-    return Solone;
-  }
-  
-  function headers(v)
-  {
-    if(!v) return __headers;
-    __headers = (typeof v === 'object' ? v : __headers);
-    return Solone;
-  }
-  
-  function env(v)
-  {
-    if(!v) return __config.env;
-    __config.env = (typeof v === 'string' ? v : __config.env);
-    return Solone;
-  }
-  
-  function debug(v)
-  {
-    if(typeof v === 'undefined') return __config.debug;
-    __config.debug= !!v;
-    return Solone;
-  }
-  
-  function config()
-  {
-    return __config;
-  }
-  
-  /* ENDREGION */
-  
-  /* add ability for auth function, check if useBackend for url */
+
   function Solone(title)
   {
-    var query = parseQuery(location.search.replace('?','')),
-        env = (query.env || __config.env || 'dev'),
-        debug = (query.debug || __config.debug || false);
-    
-    Solone.authorization = __KaleoiExtensions__.authentication;
-    
-    return getComponent(title, query, env, debug);
+    var query = parse(location.search),
+        debug = (query.debug || Solone.debug || false),
+        designPattern = '',
+        useDesignPatterns = (query.useDesignPatterns || Solone.useDesignPatterns || true)
+
+    if(Solone.environments.indexOf(query.env) === -1) return Promise.reject();
+    if(useDesignPatterns && title.indexOf('--') !== -1) {
+      var split = title.split('--');
+      title = split[1];
+      designPattern = split[0];
+      if(Solone.designPatterns.indexOf(designPattern) === -1) return Promise.reject();
+    }
+
+    return Solone.authentication({ component: title, query: query, headers: Solone.headers})
+      .then(function() {
+        if(__KaleoiExtensions__.components[title]) return __KaleoiExtensions__.components[title];
+        if(Solone.backendRouting)
+        {
+          return fetchFile('/' + title + location.search)
+            .then(function(js) {
+              createScript(title, query.env, debug, concatBackendFile(title, designPattern, debug, js));
+              return __KaleoiExtensions__.components[title];
+            });
+        }
+        return fetchComponent(title, query.env, debug, designPattern);
+      })
+      .catch(function(err) {
+        console.error(err, title, env, debug, designPattern);
+      })
   }
-  
-  Object.defineProperties(Solone,{
-    useBackend: setDescriptor(false, true, true),
-    backendRouting: setDescriptor(backendRouting),
-    authorization: setDescriptor(undefined, true, true),
-    auth: setDescriptor(auth),
-    onAuthFail: setDescriptor(function(){}, true, true),
-    setAuthFailListener: setDescriptor(setAuthFailListener),
-    headers: setDescriptor(headers),
-    prefix: setDescriptor(prefix),
-    config: setDescriptor(config),
-    env: setDescriptor(env),
-    debug: setDescriptor(debug),
-    init: setDescriptor(window.solone.init)
+
+  Object.defineProperties(Solone, {
+    config: setDescriptor(__KaleoiExtensions__.config),
+    backendRouting: setRelatedDescriptor('backendRouting', __KaleoiExtensions__.config),
+    designPatterns: setRelatedDescriptor('designPatterns', __KaleoiExtensions__.config),
+    useDesignPatterns: setRelatedDescriptor('useDesignPatterns', __KaleoiExtensions__.config),
+    uriDecoder: setRelatedDescriptor('uriDecoder', __KaleoiExtensions__.config),
+    headers: setRelatedDescriptor('headers', __KaleoiExtensions__.config),
+    prefix: setRelatedDescriptor('prefix', __KaleoiExtensions__.config),
+    environments: setRelatedDescriptor('environments', __KaleoiExtensions__.config),
+    env: setRelatedDescriptor('env', __KaleoiExtensions__.config),
+    debug: setRelatedDescriptor('debug', __KaleoiExtensions__.config),
+    authentication: setRelatedDescriptor('authentication', __KaleoiExtensions__)
   })
-  
+
   /* AMD AND COMMONJS COMPATABILITY */
   /* REGION */
   
@@ -266,6 +211,6 @@ window.solone = (function(){
   }
   
   /* ENDREGION */
-  
+
   return Solone;
 }());

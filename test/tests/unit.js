@@ -1,203 +1,288 @@
 mocha.setup('bdd');
 
-(function(describe,it,expect,spy){
+(function(describe,it,expect,spy) {
+  var componentA = null,
+      componentB = null;
+
   /* mocha tests */
-  
-  window.__KaleoiExtensions__ = {components:{}, config:{}};
-  
-  describe("Component Fetching:", function(){
+  describe("Component Fetching:", function() {
     
-    describe("Fetching from the frontend", function(){
-      
-      __KaleoiExtensions__.components = {};
-      
-      it("Should properly fetch a dev environment component", function(done){
-        
-        __KaleoiExtensions__.components = {};
-        
-        solone.prefix('/test/tests');
-        
+    describe("Fetching from the frontend (No Design Pattern)", function() {
+      it("Should properly fetch a dev environment component", function(done) {
+        solone.useDesignPatterns = false;
         solone('a')
-        .then(function(){
-          var s = document.querySelector('script[title="a"][env="dev"]');
-          
-          expect(__KaleoiExtensions__.components.a).to.not.equal(undefined);
-          expect(__KaleoiExtensions__.components.a.prototype.__extensionsCSS__).to.not.equal(undefined);
-          expect(__KaleoiExtensions__.components.a.prototype.__extensionsHTML__).to.not.equal(undefined);
-          expect(s).to.not.equal(null);
-          
-          s.parentElement.removeChild(s);
-          done();
-        })
-        .catch(function(){
-          expect(true).to.equal(false);
-          done();
-        })
-        
+          .then(function(){
+            componentA = document.querySelector('script[title="a"][env="dev"]');
+            
+            expect(__KaleoiExtensions__.components.a).to.not.equal(undefined);
+            expect(__KaleoiExtensions__.components.a.prototype.__extensionsCSS__).to.not.equal(undefined);
+            expect(__KaleoiExtensions__.components.a.prototype.__extensionsHTML__).to.not.equal(undefined);
+            expect(componentA).to.not.equal(null);
+            done();
+          })
+          .catch(function(){
+            expect(true).to.equal(false);
+            done();
+          })
       });
-      
-      it('Should properly fetch a prod environment component', function(done){
-        
-        __KaleoiExtensions__.components = {};
-        
-        solone.config().env = 'prod';
-        
+
+      it('Should properly fetch a prod environment component', function(done) {
+        solone.useDesignPatterns = false;
+        solone.env = 'prod';
         solone('a')
-        .then(function(){
-          var s = document.querySelector('script[title="a"][env="prod"]')
-          
-          expect(__KaleoiExtensions__.components.a).to.not.equal(undefined);
-          expect(__KaleoiExtensions__.components.a.prototype.__extensionsCSS__).to.not.equal(undefined);
-          expect(__KaleoiExtensions__.components.a.prototype.__extensionsHTML__).to.not.equal(undefined);
-          expect(s).to.not.equal(null);
-          
-          s.parentElement.removeChild(s);
-          done();
-        })
-        .catch(function(){
-          expect(true).to.equal(false);
-          done();
-        })
+          .then(function() {
+            componentA = document.querySelector('script[title="a"][env="prod"]')
+            
+            expect(__KaleoiExtensions__.components.a).to.not.equal(undefined);
+            expect(__KaleoiExtensions__.components.a.prototype.__extensionsCSS__).to.not.equal(undefined);
+            expect(__KaleoiExtensions__.components.a.prototype.__extensionsHTML__).to.not.equal(undefined);
+            expect(componentA).to.not.equal(null);
+            done();
+          })
+          .catch(function(){
+            expect(true).to.equal(false);
+            done();
+          });
       });
-      
-      it('Should properly fetch a debug component from a minified environment', function(done){
-        
-        __KaleoiExtensions__.components = {};
-        
-        solone.config().env = 'prod';
-        solone.config().debug = true;
-        
+
+      it('Should properly fetch a debug component from a minified environment', function(done) {
+        solone.useDesignPatterns = false;
+        solone.env = 'prod';
+        solone.debug = true;
+
         solone('a')
-        .then(function(){
-          var s = document.querySelector('script[title="a"][env="prod"][debug="true"]');
-          
-          expect(__KaleoiExtensions__.components.a).to.not.equal(undefined);
-          expect(__KaleoiExtensions__.components.a.prototype.__extensionsCSS__).to.not.equal(undefined);
-          expect(__KaleoiExtensions__.components.a.prototype.__extensionsHTML__).to.not.equal(undefined);
-          expect(s).to.not.equal(null);
-          
-          s.parentElement.removeChild(s);
-          done();
-        })
-        .catch(function(){
-          expect(true).to.equal(false);
-          done();
-        })
+          .then(function(){
+            componentA = document.querySelector('script[title="a"][env="prod"][debug="true"]');
+            
+            expect(__KaleoiExtensions__.components.a).to.not.equal(undefined);
+            expect(__KaleoiExtensions__.components.a.prototype.__extensionsCSS__).to.not.equal(undefined);
+            expect(__KaleoiExtensions__.components.a.prototype.__extensionsHTML__).to.not.equal(undefined);
+            expect(componentA).to.not.equal(null);
+            done();
+          })
+          .catch(function(){
+            expect(true).to.equal(false);
+            done();
+          });
       });
-      
-      it('Should properly fetch multiple components in sync', function(done){
-        
-        __KaleoiExtensions__.components = {};
-        
-        solone.config().env = 'dev';
-        solone.config().debug = undefined;
-        
+
+      it('Should properly fetch multiple components in sync', function(done) {
+        solone.useDesignPatterns = false;
         solone('a')
-        .then(function(){
-          return solone('b');
-        })
-        .then(function(a, b){
-          var sa = document.querySelector('script[title="a"][env="dev"]'),
-              sb = document.querySelector('script[title="b"][env="dev"]');
-          
-          expect(a).to.equal(__KaleoiExtensions__.components.a);
-          expect(b).to.equal(__KaleoiExtensions__.components.b);
-          expect(sa).to.not.equal(null);
-          expect(sb).to.not.equal(null);
-          
-          sa.parentElement.removeChild(sa);
-          sb.parentElement.removeChild(sb);
-          done();
-        })
-        .catch(function(){
-          expect(true).to.equal(false);
-          done();
-        })
+          .then(function(a) {
+            return solone('b')
+              .then(function(b) {
+                componentA = document.querySelector('script[title="a"][env="dev"]');
+                componentB = document.querySelector('script[title="b"][env="dev"]');
+                
+                expect(a).to.equal(__KaleoiExtensions__.components.a);
+                expect(b).to.equal(__KaleoiExtensions__.components.b);
+                expect(componentA).to.not.equal(null);
+                expect(componentB).to.not.equal(null);
+                done();
+              })
+              .catch(function() {
+                expect(true).to.equal(false);
+                done();
+              })
+            });
       });
-      
-      it('Should properly fetch multiple components in async', function(done){
-        
-        __KaleoiExtensions__.components = {};
-        
-        solone.config().env = 'dev';
-        solone.config().debug = undefined;
-        
+
+      it('Should properly fetch multiple components in async', function(done) {
+        solone.useDesignPatterns = false;
         Promise.all([
           solone('a'),
           solone('b')
         ])
-        .then(function(a, b){
-          var sa = document.querySelector('script[title="a"][env="dev"]'),
-              sb = document.querySelector('script[title="b"][env="dev"]');
+        .then(function(components) {
+          componentA = document.querySelector('script[title="a"][env="dev"]');
+          componentB = document.querySelector('script[title="b"][env="dev"]');
           
-          expect(a).to.equal(__KaleoiExtensions__.components.a);
-          expect(b).to.equal(__KaleoiExtensions__.components.b);
-          expect(sa).to.not.equal(null);
-          expect(sb).to.not.equal(null);
-          
-          sa.parentElement.removeChild(sa);
-          sb.parentElement.removeChild(sb);
+          expect(components[0]).to.equal(__KaleoiExtensions__.components.a);
+          expect(components[1]).to.equal(__KaleoiExtensions__.components.b);
+          expect(componentA).to.not.equal(null);
+          expect(componentB).to.not.equal(null);
           done();
         })
-        .catch(function(){
+        .catch(function() {
           expect(true).to.equal(false);
           done();
         })
       });
-      
-      it('Should properly run authentication for components', function(done){
+
+      it('Should properly run authentication for components', function(done) {
+        solone.useDesignPatterns = false;
         var cb = spy();
-        
-        __KaleoiExtensions__.components = {};
-        
-        solone.config().env = 'dev';
-        solone.config().debug = undefined;
-        solone.auth(function(info, resolve, reject){
-          if(info.component === 'a') return resolve();
-          return reject();
-        })
-        .setAuthFailListener(cb);
-        
+
+        solone.authentication = function(info) { 
+          return (new Promise(function(resolve, reject) {
+            if(info.component === 'a') return resolve();
+            return reject();
+          }))
+          .catch(cb);
+        }
+
         Promise.all([
           solone('a'),
           solone('b')
         ])
-        .then(cb)
-        .then(function(a){
-          expect(a).to.equal(__KaleoiExtensions__.components.a);
-          expect(cb.callCount).to.equal(2);
+        .then(function(components) {
+          expect(components[0]).to.equal(__KaleoiExtensions__.components.a);
+          expect(cb.callCount).to.equal(1);
           done();
         })
-        .catch(function(){
+        .catch(function() {
           expect(true).to.equal(false);
           done();
         });
       });
-      
+    });
+
+    describe("Fetching from the frontend (Design Pattern)", function() {
+      it("Should properly fetch a dev environment component", function(done) {
+        solone.useDesignPatterns = true;
+        solone('atoms--a')
+          .then(function(){
+            componentA = document.querySelector('script[title="a"][env="dev"]');
+            
+            expect(__KaleoiExtensions__.components.a).to.not.equal(undefined);
+            expect(__KaleoiExtensions__.components.a.prototype.__extensionsCSS__).to.not.equal(undefined);
+            expect(__KaleoiExtensions__.components.a.prototype.__extensionsHTML__).to.not.equal(undefined);
+            expect(componentA).to.not.equal(null);
+            done();
+          })
+          .catch(function(){
+            expect(true).to.equal(false);
+            done();
+          })
+      });
+
+      it('Should properly fetch a prod environment component', function(done) {
+        solone.useDesignPatterns = true;
+        solone.env = 'prod';
+        solone('atoms--a')
+          .then(function() {
+            componentA = document.querySelector('script[title="a"][env="prod"]')
+            
+            expect(__KaleoiExtensions__.components.a).to.not.equal(undefined);
+            expect(__KaleoiExtensions__.components.a.prototype.__extensionsCSS__).to.not.equal(undefined);
+            expect(__KaleoiExtensions__.components.a.prototype.__extensionsHTML__).to.not.equal(undefined);
+            expect(componentA).to.not.equal(null);
+            done();
+          })
+          .catch(function(){
+            expect(true).to.equal(false);
+            done();
+          });
+      });
+
+      it('Should properly fetch a debug component from a minified environment', function(done) {
+        solone.useDesignPatterns = true;
+        solone.env = 'prod';
+        solone.debug = true;
+
+        solone('atoms--a')
+          .then(function(){
+            componentA = document.querySelector('script[title="a"][env="prod"][debug="true"]');
+            
+            expect(__KaleoiExtensions__.components.a).to.not.equal(undefined);
+            expect(__KaleoiExtensions__.components.a.prototype.__extensionsCSS__).to.not.equal(undefined);
+            expect(__KaleoiExtensions__.components.a.prototype.__extensionsHTML__).to.not.equal(undefined);
+            expect(componentA).to.not.equal(null);
+            done();
+          })
+          .catch(function(){
+            expect(true).to.equal(false);
+            done();
+          });
+      });
+
+      it('Should properly fetch multiple components in sync', function(done) {
+        solone.useDesignPatterns = true;
+        solone('atoms--a')
+          .then(function(a) {
+            return solone('b')
+              .then(function(b) {
+                componentA = document.querySelector('script[title="a"][env="dev"]');
+                componentB = document.querySelector('script[title="b"][env="dev"]');
+                
+                expect(a).to.equal(__KaleoiExtensions__.components.a);
+                expect(b).to.equal(__KaleoiExtensions__.components.b);
+                expect(componentA).to.not.equal(null);
+                expect(componentB).to.not.equal(null);
+                done();
+              })
+              .catch(function() {
+                expect(true).to.equal(false);
+                done();
+              })
+            });
+      });
+
+      it('Should properly fetch multiple components in async', function(done) {
+        solone.useDesignPatterns = true;
+        Promise.all([
+          solone('atoms--a'),
+          solone('atoms--b')
+        ])
+        .then(function(components) {
+          componentA = document.querySelector('script[title="a"][env="dev"]');
+          componentB = document.querySelector('script[title="b"][env="dev"]');
+          
+          expect(components[0]).to.equal(__KaleoiExtensions__.components.a);
+          expect(components[1]).to.equal(__KaleoiExtensions__.components.b);
+          expect(componentA).to.not.equal(null);
+          expect(componentB).to.not.equal(null);
+          done();
+        })
+        .catch(function() {
+          expect(true).to.equal(false);
+          done();
+        })
+      });
+
+      it('Should properly run authentication for components', function(done) {
+        solone.useDesignPatterns = true;
+        var cb = spy();
+
+        solone.authentication = function(info) { 
+          return (new Promise(function(resolve, reject) {
+            if(info.component === 'a') return resolve();
+            return reject();
+          }))
+          .catch(cb);
+        }
+
+        Promise.all([
+          solone('atoms--a'),
+          solone('atoms--b')
+        ])
+        .then(function(components) {
+          expect(components[0]).to.equal(__KaleoiExtensions__.components.a);
+          expect(cb.callCount).to.equal(1);
+          done();
+        })
+        .catch(function() {
+          expect(true).to.equal(false);
+          done();
+        });
+      });
     });
     
-    describe("Fetching from the backend", function(){
+    describe("Fetching from the backend (No Design Pattern)", function() {
       
-      __KaleoiExtensions__.components = {};
-      
-      it('Should properly fetch a dev environment component', function(done){
-        __KaleoiExtensions__.components = {};
-        solone.useBackend = true;
-        solone.config().env = 'dev';
-        solone.config().debug = undefined;
-        
-        solone.auth(function(info, resolve){ return resolve(); })
-        
+      it('Should properly fetch a dev environment component', function(done) {
+        solone.backendRouting = true;
+        solone.useDesignPatterns = false;
+
         solone('a')
         .then(function(){
-          var s = document.querySelector('script[title="a"][env="dev"]');
+          componentA = document.querySelector('script[title="a"][env="dev"]');
           
           expect(__KaleoiExtensions__.components.a).to.not.equal(undefined);
           expect(__KaleoiExtensions__.components.a.prototype.__extensionsCSS__).to.not.equal(undefined);
           expect(__KaleoiExtensions__.components.a.prototype.__extensionsHTML__).to.not.equal(undefined);
-          expect(s).to.not.equal(null);
-          
-          s.parentElement.removeChild(s);
+          expect(componentA).to.not.equal(null);
           done();
         })
         .catch(function(){
@@ -207,22 +292,19 @@ mocha.setup('bdd');
         
       });
       
-      it('Should properly fetch a prod environment component', function(done){
-        
-        __KaleoiExtensions__.components = {};
-        
-        solone.config().env = 'prod';
+      it('Should properly fetch a prod environment component', function(done) {
+        solone.backendRouting = true;
+        solone.useDesignPatterns = false;
+        solone.env = 'prod';
         
         solone('a')
         .then(function(){
-          var s = document.querySelector('script[title="a"][env="prod"]');
+          componentA = document.querySelector('script[title="a"][env="prod"]');
           
           expect(__KaleoiExtensions__.components.a).to.not.equal(undefined);
           expect(__KaleoiExtensions__.components.a.prototype.__extensionsCSS__).to.not.equal(undefined);
           expect(__KaleoiExtensions__.components.a.prototype.__extensionsHTML__).to.not.equal(undefined);
-          expect(s).to.not.equal(null);
-          
-          s.parentElement.removeChild(s);
+          expect(componentA).to.not.equal(null);
           done();
         })
         .catch(function(){
@@ -231,23 +313,20 @@ mocha.setup('bdd');
         })
       });
       
-      it('Should properly fetch a debug component from a minified environment', function(done){
-        
-        __KaleoiExtensions__.components = {};
-        
-        solone.config().env = 'prod';
-        solone.config().debug = true;
+      it('Should properly fetch a debug component from a minified environment', function(done) {
+        solone.backendRouting = true;
+        solone.useDesignPatterns = false;
+        solone.env = 'prod';
+        solone.debug = true;
         
         solone('a')
         .then(function(){
-          var s = document.querySelector('script[title="a"][env="prod"][debug="true"]');
+          componentA = document.querySelector('script[title="a"][env="prod"][debug="true"]');
           
           expect(__KaleoiExtensions__.components.a).to.not.equal(undefined);
           expect(__KaleoiExtensions__.components.a.prototype.__extensionsCSS__).to.not.equal(undefined);
           expect(__KaleoiExtensions__.components.a.prototype.__extensionsHTML__).to.not.equal(undefined);
-          expect(s).to.not.equal(null);
-          
-          s.parentElement.removeChild(s);
+          expect(componentA).to.not.equal(null);
           done();
         })
         .catch(function(){
@@ -256,58 +335,160 @@ mocha.setup('bdd');
         })
       });
       
-      it('Should properly fetch multiple components in sync', function(done){
-        
-        __KaleoiExtensions__.components = {};
-        
-        solone.config().env = 'dev';
-        solone.config().debug = undefined;
-        
+      it('Should properly fetch multiple components in sync', function(done) {
+        solone.backendRouting = true;
+        solone.useDesignPatterns = false;
+
         solone('a')
-        .then(function(){
-          return solone('b');
-        })
-        .then(function(a, b){
-          var sa = document.querySelector('script[title="a"][env="dev"]'),
-              sb = document.querySelector('script[title="b"][env="dev"]');
-          
-          expect(a).to.equal(__KaleoiExtensions__.components.a);
-          expect(b).to.equal(__KaleoiExtensions__.components.b);
-          expect(sa).to.not.equal(null);
-          expect(sb).to.not.equal(null);
-          
-          sa.parentElement.removeChild(sa);
-          sb.parentElement.removeChild(sb);
-          done();
-        })
-        .catch(function(){
-          expect(true).to.equal(false);
-          done();
-        })
+          .then(function(a){
+            return solone('b')
+              .then(function(b){
+                componentA = document.querySelector('script[title="a"][env="dev"]');
+                componentB = document.querySelector('script[title="b"][env="dev"]');
+                
+                expect(a).to.equal(__KaleoiExtensions__.components.a);
+                expect(b).to.equal(__KaleoiExtensions__.components.b);
+                expect(componentA).to.not.equal(null);
+                expect(componentB).to.not.equal(null);
+                done();
+              })
+              .catch(function(){
+                expect(true).to.equal(false);
+                done();
+              })
+          })
       });
       
       it('Should properly fetch multiple components in async', function(done){
-        
-        __KaleoiExtensions__.components = {};
-        
-        solone.config().env = 'dev';
-        solone.config().debug = undefined;
+        solone.backendRouting = true;
+        solone.useDesignPatterns = false;
         
         Promise.all([
           solone('a'),
           solone('b')
         ])
-        .then(function(a, b){
-          var sa = document.querySelector('script[title="a"][env="dev"]'),
-              sb = document.querySelector('script[title="b"][env="dev"]');
+        .then(function(components){
+          componentA = document.querySelector('script[title="a"][env="dev"]');
+          componentB = document.querySelector('script[title="b"][env="dev"]');
           
-          expect(a).to.equal(__KaleoiExtensions__.components.a);
-          expect(b).to.equal(__KaleoiExtensions__.components.b);
-          expect(sa).to.not.equal(null);
-          expect(sb).to.not.equal(null);
+          expect(components[0]).to.equal(__KaleoiExtensions__.components.a);
+          expect(components[1]).to.equal(__KaleoiExtensions__.components.b);
+          expect(componentA).to.not.equal(null);
+          expect(componentB).to.not.equal(null);
+          done();
+        })
+        .catch(function(){
+          expect(true).to.equal(false);
+          done();
+        })
+      });
+    });
+
+    describe("Fetching from the backend (Design Pattern)", function() {
+      it('Should properly fetch a dev environment component', function(done) {
+        solone.backendRouting = true;
+        solone.useDesignPatterns = true;
+
+        solone('a')
+        .then(function(){
+          componentA = document.querySelector('script[title="a"][env="dev"]');
           
-          sa.parentElement.removeChild(sa);
-          sb.parentElement.removeChild(sb);
+          expect(__KaleoiExtensions__.components.a).to.not.equal(undefined);
+          expect(__KaleoiExtensions__.components.a.prototype.__extensionsCSS__).to.not.equal(undefined);
+          expect(__KaleoiExtensions__.components.a.prototype.__extensionsHTML__).to.not.equal(undefined);
+          expect(componentA).to.not.equal(null);
+          done();
+        })
+        .catch(function(){
+          expect(true).to.equal(false);
+          done();
+        })
+        
+      });
+      
+      it('Should properly fetch a prod environment component', function(done) {
+        solone.backendRouting = true;
+        solone.useDesignPatterns = true;
+        solone.env = 'prod';
+        
+        solone('a')
+        .then(function(){
+          componentA = document.querySelector('script[title="a"][env="prod"]');
+          
+          expect(__KaleoiExtensions__.components.a).to.not.equal(undefined);
+          expect(__KaleoiExtensions__.components.a.prototype.__extensionsCSS__).to.not.equal(undefined);
+          expect(__KaleoiExtensions__.components.a.prototype.__extensionsHTML__).to.not.equal(undefined);
+          expect(componentA).to.not.equal(null);
+          done();
+        })
+        .catch(function(){
+          expect(true).to.equal(false);
+          done();
+        })
+      });
+      
+      it('Should properly fetch a debug component from a minified environment', function(done) {
+        solone.backendRouting = true;
+        solone.useDesignPatterns = true;
+        solone.env = 'prod';
+        solone.debug = true;
+        
+        solone('a')
+        .then(function(){
+          componentA = document.querySelector('script[title="a"][env="prod"][debug="true"]');
+          
+          expect(__KaleoiExtensions__.components.a).to.not.equal(undefined);
+          expect(__KaleoiExtensions__.components.a.prototype.__extensionsCSS__).to.not.equal(undefined);
+          expect(__KaleoiExtensions__.components.a.prototype.__extensionsHTML__).to.not.equal(undefined);
+          expect(componentA).to.not.equal(null);
+          done();
+        })
+        .catch(function(){
+          expect(true).to.equal(false);
+          done();
+        })
+      });
+      
+      it('Should properly fetch multiple components in sync', function(done) {
+        solone.backendRouting = true;
+        solone.useDesignPatterns = true;
+
+        solone('a')
+          .then(function(a){
+            return solone('b')
+              .then(function(b){
+                componentA = document.querySelector('script[title="a"][env="dev"]');
+                componentB = document.querySelector('script[title="b"][env="dev"]');
+                
+                expect(a).to.equal(__KaleoiExtensions__.components.a);
+                expect(b).to.equal(__KaleoiExtensions__.components.b);
+                expect(componentA).to.not.equal(null);
+                expect(componentB).to.not.equal(null);
+                done();
+              })
+              .catch(function(){
+                expect(true).to.equal(false);
+                done();
+              })
+          })
+      });
+      
+      it('Should properly fetch multiple components in async', function(done){
+        solone.backendRouting = true;
+        solone.useDesignPatterns = true;
+        
+        Promise.all([
+          solone('a'),
+          solone('b')
+        ])
+        .then(function(components){
+          componentA = document.querySelector('script[title="a"][env="dev"]');
+          componentB = document.querySelector('script[title="b"][env="dev"]');
+          
+          expect(components[0]).to.equal(__KaleoiExtensions__.components.a);
+          expect(components[1]).to.equal(__KaleoiExtensions__.components.b);
+          expect(componentA).to.not.equal(null);
+          expect(componentB).to.not.equal(null);
           done();
         })
         .catch(function(){
@@ -318,9 +499,18 @@ mocha.setup('bdd');
     });
   })
   
-  solone.init(function(){
-    solone.prefix('/test/tests');
-    mocha.run();
+  beforeEach(function() {
+    __KaleoiExtensions__.components = {};
+    solone.prefix = '/test/tests';
+    solone.env = 'dev';
+    solone.debug = undefined;
+    solone.authentication = function() { return Promise.resolve(); };
+    if(componentA && componentA.parentElement) componentA.parentElement.removeChild(componentA);
+    if(componentB && componentB.parentElement) componentB.parentElement.removeChild(componentB);
   })
   
+  solone.init(function(){
+    mocha.run();
+  });
+
 }(describe,it,chai.expect,sinon.spy));

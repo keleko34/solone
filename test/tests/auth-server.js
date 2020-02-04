@@ -1,1 +1,0 @@
-module.exports = function(info, resolve, reject){ return resolve(); }

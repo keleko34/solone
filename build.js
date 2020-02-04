@@ -1,24 +1,40 @@
-var base = process.cwd().replace(/\\/g,'/'),
-    fs = require('fs'),
-    closureCompiler = require('google-closure-compiler-js').compile;
+const { unlink, readFileSync, writeFileSync } = require('fs'),
+      base = process.cwd().replace(/\\/g,'/'),
+      closureCompiler = require('google-closure-compiler-js');
 
 console.log("Building Solone Libraries...");
 
-function flags(src)
+function flags(title)
 {
   return {
-    jsCode: [{src: fs.readFileSync(base+src,'utf8')}],
+    jsCode: [{src: readFileSync(`${base}/${title}.js`,'utf8')}],
     compilationLevel: 'SIMPLE',
     rewritePolyfills: false
   }
 }
 
-fs.unlinkSync(base+'/solone.min.js');
-fs.unlinkSync(base+'/solone-client.min.js');
-fs.unlinkSync(base+'/solone-server.min.js');
+function compile(title)
+{
+  return new Promise((resolve, reject) => {
+    unlink(`${base}/${title}.min.js`, (err) => {
+      if(err && err.code !== 'ENOENT') return reject(err);
+      writeFileSync(`${base}/${title}.min.js`, closureCompiler(flags(title)).compiledCode
+        .replace('solone.js','solone.min.js')
+        .replace('solone-client', 'solone-client.min')
+        .replace('solone-server', 'solone-server.min'));
+      resolve();
+    })
+  });
+}
 
-fs.writeFileSync(base+'/solone.min.js',closureCompiler(flags('/solone.js')).compiledCode.replace('solone.js','solone.min.js').replace('solone-client', 'solone-client.min').replace('solone-server', 'solone-server.min'));
-fs.writeFileSync(base+'/solone-client.min.js',closureCompiler(flags('/solone-client.js')).compiledCode);
-fs.writeFileSync(base+'/solone-server.min.js',closureCompiler(flags('/solone-server.js')).compiledCode);
-
-console.log("Finished Building Minified Libraries..");
+Promise.all([
+  compile('solone'),
+  compile('solone-client'),
+  compile('solone-server')
+])
+.then(() => {
+  console.log("Finished Building Minified Solone Libraries..");
+})
+.catch((err) => {
+  console.error('Failed To Build Solone Libraries', err);
+})

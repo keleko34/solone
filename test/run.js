@@ -2,16 +2,22 @@ const { spawn } = require('child_process'),
       { createServer } = require("http"),
       { stdin, platform } = process,
       { createReadStream } = require('fs'),
+      solone = require('../solone'),
       base = process.cwd().replace(/\\/g, '/'),
       app = (platform == 'darwin' ? 'open' : platform == 'win32' ? 'explorer.exe' : 'xdg-open');
 
 let browser;
 
+solone.prefix = '/test/tests';
+
 createServer((req, res) => {
   if(req.url === '/') req.url = '/test/index.html';
-  const read = createReadStream(base + req.url, { encoding: 'utf8' });
-  read.on('open', () => { read.pipe(res); });
-  read.on('error', (err) => { console.error(err); res.end(''); });
+
+  solone(req, res, () => {
+    const read = createReadStream(base + req.url, { encoding: 'utf8' });
+    read.on('open', () => { read.pipe(res); });
+    read.on('error', (err) => { res.statusCode = 404; res.end(''); });
+  });
 })
 .listen(8080);
 
